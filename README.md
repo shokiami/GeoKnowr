@@ -1,3 +1,3 @@
 # GeoKnowr
 
-Welcome to GeoKnowr!
+A GeoGuessr AI.
