@@ -61,8 +61,8 @@ def scrape_images():
   os.makedirs(IMAGES_DIR)
 
   with sync_playwright() as playwright:
-    firefox = playwright.firefox
-    browser = firefox.launch()
+    webkit = playwright.webkit
+    browser = webkit.launch()
     context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
     page = context.new_page()
 
@@ -71,8 +71,10 @@ def scrape_images():
       pano_id = image['pano_id']
       lat = image['lat']
       lng = image['lng']
+    
+      heading = random.uniform(0, 360)
 
-      gsv_url = f'https://www.google.com/maps/@{lat},{lng},3a,75y,0h,90t/data=!3m6!1e1!3m4!1s{pano_id}!2e0!7i16384!8i8192'
+      gsv_url = f'https://www.google.com/maps/@{lat},{lng},3a,75y,{heading}h,90t/data=!3m6!1e1!3m4!1s{pano_id}!2e0!7i16384!8i8192'
       page.goto(gsv_url)
 
       page.wait_for_selector('canvas')  # wait for canvas to load
