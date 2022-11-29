@@ -70,7 +70,14 @@ with sync_playwright() as playwright:
     page.goto(gsv_url)
 
     page.wait_for_selector('canvas')
+    js_injection = """
+      canvas = document.querySelector('canvas');
+      context = canvas.getContext('webgl');
+      context.drawArrays = function() { }
+    """
+    page.evaluate_handle(js_injection)
 
+    page.wait_for_selector('.yHc72')  # wait for gsv image to load
     elements_to_hide = """
       .app-viewcard-strip,
       .scene-footer,
@@ -81,15 +88,6 @@ with sync_playwright() as playwright:
       }
     """
     page.add_style_tag(content=elements_to_hide)
-
-    js_injection = """
-      canvas = document.querySelector('canvas');
-      context = canvas.getContext('webgl');
-      context.drawArrays = function() { }
-    """
-    page.evaluate_handle(js_injection)
-
-    sleep(2)  # wait for gsv image to load
 
     page.screenshot(path=f'{TARGET_DIR}/{pano_id}.png')
 
