@@ -51,7 +51,7 @@ for i in range(NUM_IMAGES):
   print(f'discovered {i+1}/{NUM_IMAGES}: {round(perf_counter() - start, 1)}s')
 
 images_df = pd.DataFrame(images)
-images_df.to_csv("images.csv", index=False)
+images_df.to_csv('images.csv', index=False)
 print(f'saved images.csv: {round(perf_counter() - start, 1)}s')
 
 with sync_playwright() as playwright:
