@@ -6,7 +6,7 @@ import shutil
 import random
 from time import sleep, perf_counter
 
-NUM_IMAGES = 1
+NUM_IMAGES = 10
 IMAGE_WIDTH = 1600
 IMAGE_HEIGHT = 800
 TARGET_DIR = 'images'
