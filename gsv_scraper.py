@@ -7,6 +7,8 @@ import random
 from time import sleep, perf_counter
 
 NUM_IMAGES = 10
+IMAGE_WIDTH = 1600
+IMAGE_HEIGHT = 800
 TARGET_DIR = 'images'
 
 with open('key.txt') as f:
@@ -46,16 +48,16 @@ for i in range(NUM_IMAGES):
   images['lat'].append(lat)
   images['lng'].append(lng)
 
-  print(f'discovered {i+1}/{NUM_IMAGES}: {int(perf_counter() - start)}s')
+  print(f'discovered {i+1}/{NUM_IMAGES}: {round(perf_counter() - start, 1)}s')
 
 images_df = pd.DataFrame(images)
 images_df.to_csv("images.csv", index=False)
-print(f'saved images.csv: {int(perf_counter() - start)}s')
+print(f'saved images.csv: {round(perf_counter() - start, 1)}s')
 
 with sync_playwright() as playwright:
   webkit = playwright.webkit
   browser = webkit.launch()
-  context = browser.new_context()
+  context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
   page = context.new_page()
 
   for i in range(NUM_IMAGES):
@@ -90,13 +92,12 @@ with sync_playwright() as playwright:
     """
     page.evaluate_handle(js_injection)
 
-    sleep(2)
+    sleep(2)  # wait for gsv image to load
 
-    canvas_element = page.query_selector('canvas')
-    canvas_element.screenshot(path=f'{TARGET_DIR}/{pano_id}.png')
+    page.screenshot(path=f'{TARGET_DIR}/{pano_id}.png')
 
-    print(f'downloaded {i+1}/{NUM_IMAGES}: {int(perf_counter() - start)}s')
+    print(f'downloaded {i+1}/{NUM_IMAGES}: {round(perf_counter() - start, 1)}s')
   
   browser.close()
 
-print(f'all done! total time: {int(perf_counter() - start)}s')
+print(f'all done! total time: {round(perf_counter() - start, 1)}s')
