@@ -52,7 +52,7 @@ for i in range(NUM_IMAGES):
 
 images_df = pd.DataFrame(images)
 images_df.to_csv('images.csv', index=False)
-print(f'saved images.csv: {round(perf_counter() - start, 1)}s')
+print(f'saved images.csv!')
 
 with sync_playwright() as playwright:
   webkit = playwright.webkit
@@ -97,4 +97,4 @@ with sync_playwright() as playwright:
   
   browser.close()
 
-print(f'all done! total time: {round(perf_counter() - start, 1)}s')
+print(f'finished!')
