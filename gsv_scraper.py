@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import shutil
 import random
-from time import sleep, perf_counter
+from time import perf_counter
 
 NUM_IMAGES = 10
 IMAGE_WIDTH = 1600
