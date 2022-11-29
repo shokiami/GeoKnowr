@@ -69,7 +69,7 @@ with sync_playwright() as playwright:
     gsv_url = f'https://www.google.com/maps/@{lat},{lng},3a,75y,0h,90t/data=!3m6!1e1!3m4!1s{pano_id}!2e0!7i16384!8i8192'
     page.goto(gsv_url)
 
-    page.wait_for_selector('canvas')
+    page.wait_for_selector('canvas')  # wait for canvas to load
     js_injection = """
       canvas = document.querySelector('canvas');
       context = canvas.getContext('webgl');
@@ -77,7 +77,7 @@ with sync_playwright() as playwright:
     """
     page.evaluate_handle(js_injection)
 
-    page.wait_for_selector('.yHc72')  # wait for gsv image to load
+    page.wait_for_selector('#minimap div div:nth-child(2)')  # wait for image to load
     elements_to_hide = """
       .app-viewcard-strip,
       .scene-footer,
