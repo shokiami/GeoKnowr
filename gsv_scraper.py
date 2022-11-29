@@ -7,8 +7,8 @@ import random
 from time import perf_counter
 
 NUM_IMAGES = 10
-IMAGE_WIDTH = 1600
-IMAGE_HEIGHT = 800
+IMAGE_WIDTH = 1920
+IMAGE_HEIGHT = 1080
 TARGET_DIR = 'images'
 
 with open('key.txt') as f:
