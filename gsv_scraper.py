@@ -6,7 +6,7 @@ import shutil
 import random
 from time import sleep, perf_counter
 
-NUM_IMAGES = 10
+NUM_IMAGES = 1
 IMAGE_WIDTH = 1600
 IMAGE_HEIGHT = 800
 TARGET_DIR = 'images'
@@ -72,13 +72,10 @@ with sync_playwright() as playwright:
     page.wait_for_selector('canvas')
 
     elements_to_hide = """
-      .widget-image-header-close,
-      .widget-image-header-scrim,
-      .watermark,
       .app-viewcard-strip,
       .scene-footer,
       #titlecard,
-      #pane,
+      #watermark,
       #image-header {
         display: none;
       }
@@ -88,7 +85,7 @@ with sync_playwright() as playwright:
     js_injection = """
       canvas = document.querySelector('canvas');
       context = canvas.getContext('webgl');
-      context.drawArrays = function() {}
+      context.drawArrays = function() { }
     """
     page.evaluate_handle(js_injection)
 
