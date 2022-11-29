@@ -15,7 +15,7 @@ with open('key.txt') as f:
   api_key = f.readlines()[0]
 
 if os.path.isdir(TARGET_DIR):
-    shutil.rmtree(TARGET_DIR)
+  shutil.rmtree(TARGET_DIR)
 os.makedirs(TARGET_DIR)
 
 start = perf_counter()
