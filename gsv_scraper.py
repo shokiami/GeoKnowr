@@ -2,10 +2,11 @@ import requests
 from playwright.sync_api import sync_playwright, TimeoutError
 import csv
 import os
+import shutil
 import random
 from time import perf_counter
 
-NUM_IMAGES = 640
+NUM_IMAGES = 10000
 IMAGE_WIDTH = 480
 IMAGE_HEIGHT = 360
 IMAGES_CSV = 'images.csv'
@@ -15,23 +16,26 @@ API_KEY = 'key.txt'
 def main():
   start = perf_counter()  # start timer
 
-  if not os.path.exists(IMAGES_CSV):
+  if not os.path.exists(IMAGES_CSV) or not os.path.isdir(IMAGES_DIR):
+    if os.path.isfile(IMAGES_CSV):
+      os.remove(IMAGES_CSV)
     with open(IMAGES_CSV, 'w') as f:
       writer = csv.writer(f)
       writer.writerow(['pano_id', 'lat', 'lng'])
-
-  if not os.path.isdir(IMAGES_DIR):
+    if os.path.isdir(IMAGES_DIR):
+        shutil.rmtree(IMAGES_DIR)
     os.makedirs(IMAGES_DIR)
 
   with open(IMAGES_CSV, 'r') as f:
-    num_scraped = sum(1 for row in f) - 1
+    next(f)
+    prev_scraped = sum(1 for row in f)
 
   with open(IMAGES_CSV, 'a') as f, sync_playwright() as playwright, playwright.webkit.launch() as browser:
     writer = csv.writer(f)
     context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
     page = context.new_page()
 
-    for i in range(num_scraped, NUM_IMAGES):
+    for i in range(prev_scraped, NUM_IMAGES):
       location_found = False
 
       while not location_found:
@@ -89,6 +93,6 @@ def main():
       page.screenshot(path=f'{IMAGES_DIR}/{pano_id}.png')
       print(f'scraped: {i + 1}/{NUM_IMAGES}, time: {round(perf_counter() - start, 1)}s')
 
-  print(f"done!")
+  print(f'done!')
 
 main()
