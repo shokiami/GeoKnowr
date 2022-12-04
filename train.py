@@ -1,7 +1,7 @@
 import torch
 import pandas as pd
 from torchvision import io
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 
 IMAGES_CSV = 'images.csv'
 IMAGES_DIR = 'images'
@@ -25,9 +25,6 @@ class Dataset(torch.utils.data.Dataset):
     return image, (lat, lng)
 
 data = Dataset()
-train_size = int(0.8 * len(data))
-train_data = data[:train_size]
-test_data = data[train_size:]
+train_data, test_data = random_split(data, [int(0.9 * len(data)), int(0.1 * len(data))])
 train_dataloader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
-
