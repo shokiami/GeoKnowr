@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import pandas as pd
-from torchvision import io
-from torch.utils.data import DataLoader, random_split
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision import io
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from time import perf_counter
 
 IMAGES_CSV = 'images.csv'
@@ -16,7 +16,7 @@ BATCH_SIZE = 32
 LEARNING_RATE = 0.01
 MOMENTUM = 0.9
 
-class Dataset(torch.utils.data.Dataset):
+class GeoData(Dataset):
   def __init__(self):
     super(Dataset, self).__init__()
     self.images_df = pd.read_csv(IMAGES_CSV)
@@ -109,7 +109,7 @@ def test(model, test_loader):
 def main():
   start = perf_counter()  # start timer
 
-  data = Dataset()
+  data = GeoData()
   train_data, test_data = random_split(data, [0.9, 0.1])
   train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
   test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
