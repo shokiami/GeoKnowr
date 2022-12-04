@@ -6,7 +6,7 @@ import shutil
 import random
 from time import perf_counter
 
-NUM_IMAGES = 10
+NUM_IMAGES = 1
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
 IMAGES_CSV = 'images.csv'
