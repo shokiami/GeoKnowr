@@ -11,19 +11,22 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-IMAGES_CSV = 'images.csv'
-IMAGES_DIR = 'images'
-MODEL_PATH = 'geonet.pt'
-LOSSES_CSV = 'losses.csv'
+GSV_SCRAPER_OUT = 'gsv_scraper_out'
+IMAGES_CSV = os.path.join(GSV_SCRAPER_OUT, 'images.csv')
+IMAGES_DIR = os.path.join(GSV_SCRAPER_OUT, 'images')
+TRAIN_OUT = 'train_out'
+MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
+LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
+PLOT_PATH = os.path.join(TRAIN_OUT, 'losses.png')
 NUM_EPOCHS = 20
 BATCH_SIZE = 32
 LEARNING_RATE = 0.01
 MOMENTUM = 0.9
 
 class GeoData(Dataset):
-  def __init__(self):
+  def __init__(self, images_df):
     super(Dataset, self).__init__()
-    self.images_df = pd.read_csv(IMAGES_CSV)
+    self.images_df = images_df
 
   def __len__(self):
     return len(self.images_df)
@@ -83,10 +86,11 @@ class GeoNet(nn.Module):
     lat2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([0])))
     lng2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([1])))
 
-    return torch.mean(torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1)))  # mean distance on unit sphere
-    # dlat = torch.abs(lat1 - lat2)
-    # dlng = torch.min(torch.remainder(lng1 - lng2, 360), torch.remainder(lng2 - lng1, 360))
-    # return torch.mean(dlat + dlng)
+    dlat = lat1 - lat2
+    dlng = torch.min(torch.remainder(lng1 - lng2, 360), torch.remainder(lng2 - lng1, 360))
+    return torch.mean(dlat * dlat + dlng * dlng)
+
+    # return torch.mean(torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1)))  # mean distance on unit sphere
 
 def train(model, train_loader, optimizer):
   model.train()
@@ -102,6 +106,7 @@ def train(model, train_loader, optimizer):
   return np.mean(losses)
 
 def test(model, test_loader):
+  print('testing...')
   model.eval()
   losses = []
   with torch.no_grad():
@@ -114,34 +119,34 @@ def test(model, test_loader):
 def main():
   start = perf_counter()  # start timer
 
-  data = GeoData()
-  train_data, test_data = random_split(data, [0.9, 0.1])
+  images_df = pd.read_csv(IMAGES_CSV)[:320]
+  train_size = int(0.9 * len(images_df))
+  train_data = GeoData(images_df[:train_size])
+  test_data = GeoData(images_df[train_size:])
   train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
   test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 
-  if os.path.isfile(MODEL_PATH):
-    model = torch.load(MODEL_PATH)
-  else:
-    model = GeoNet()
-
-    if os.path.isfile(LOSSES_CSV):
-      os.remove(LOSSES_CSV)
-
-  if not os.path.isfile(LOSSES_CSV):
+  if not os.path.isdir(TRAIN_OUT):
+    os.makedirs(TRAIN_OUT)
     with open(LOSSES_CSV, 'w') as f:
       writer = csv.writer(f)
       writer.writerow(['train_loss', 'test_loss'])
 
+  prev_epochs = 0
+  train_losses = []
+  test_losses = []
   with open(LOSSES_CSV, 'r') as f:
     next(f)
-    prev_epochs = 0
-    train_losses = []
-    test_losses = []
     for row in f:
       prev_epochs += 1
       train_loss, test_loss = eval(row)
       train_losses.append(train_loss)
       test_losses.append(test_loss)
+  
+  if os.path.isfile(MODEL_PATH):
+    model = torch.load(MODEL_PATH)
+  else:
+    model = GeoNet()
 
   optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
 
@@ -165,7 +170,7 @@ def main():
       plt.xlabel('Epoch')
       plt.ylabel('Loss')
       plt.legend()
-      plt.savefig('losses.png')
+      plt.savefig(PLOT_PATH)
 
       print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train loss: {train_loss}, test loss: {test_loss}, time: {round(perf_counter() - start, 1)}s')
 
