@@ -30,7 +30,7 @@ class Dataset(torch.utils.data.Dataset):
     lng = image['lng']
     image_path = f"{IMAGES_DIR}/{pano_id}.png"
     image = io.read_image(image_path).float()
-    if image.shape[0] == 4:
+    if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
     label = torch.FloatTensor([lat, lng])
     return image, label
@@ -96,7 +96,7 @@ def train(model, train_loader, optimizer):
     loss.backward()
     optimizer.step()
     losses.append(loss.item())
-    print(f"Training... batch: {batch + 1}/{len(train_loader)}")
+    print(f"Training... Batch: {batch + 1}/{len(train_loader)}")
   return np.mean(losses)
 
 def test(model, test_loader):
@@ -107,7 +107,7 @@ def test(model, test_loader):
       labels_pred = model(images)
     loss = model.loss(labels_pred, labels)
     losses.append(loss.item())
-    print(f"Testing... batch: {batch + 1}/{len(test_loader)}")
+    print(f"Testing... Batch: {batch + 1}/{len(test_loader)}")
   return np.mean(losses)
 
 def main():
@@ -134,7 +134,6 @@ def main():
   plt.xlabel("Epoch")
   plt.ylabel("Loss")
   plt.legend()
-  plt.show()
-  plt.savefig("losses")
+  plt.savefig("losses.png")
 
 main()

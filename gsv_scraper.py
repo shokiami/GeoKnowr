@@ -7,8 +7,8 @@ import random
 from time import perf_counter
 
 NUM_IMAGES = 640
-IMAGE_WIDTH = 1920
-IMAGE_HEIGHT = 1080
+IMAGE_WIDTH = 480
+IMAGE_HEIGHT = 360
 IMAGES_CSV = 'images.csv'
 IMAGES_DIR = 'images'
 API_KEY = 'key.txt'
