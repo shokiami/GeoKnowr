@@ -119,7 +119,7 @@ def test(model, test_loader):
 def main():
   start = perf_counter()  # start timer
 
-  images_df = pd.read_csv(IMAGES_CSV)[:320]
+  images_df = pd.read_csv(IMAGES_CSV)
   train_size = int(0.9 * len(images_df))
   train_data = GeoData(images_df[:train_size])
   test_data = GeoData(images_df[train_size:])
