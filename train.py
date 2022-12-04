@@ -8,10 +8,10 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 
-IMAGES_CSV = 'images.csv'
-IMAGES_DIR = 'images'
+IMAGES_CSV = 'images2.csv'
+IMAGES_DIR = 'images2'
 BATCH_SIZE = 32
-EPOCHS = 5
+EPOCHS = 20
 LEARNING_RATE = 0.01
 MOMENTUM = 0.9
 
@@ -47,7 +47,7 @@ class GeoNet(nn.Module):
     self.conv7 = nn.Conv2d(256, 512, 3, stride=1, padding=1)
     self.conv8 = nn.Conv2d(512, 1024, 3, stride=1, padding=1)
     self.maxpool = nn.MaxPool2d(3, stride=2, padding=1)
-    self.fc1 = nn.Linear(40960, 2)
+    self.fc1 = nn.Linear(4096, 2)
     self.accuracy = None
 
   def forward(self, x):
@@ -112,7 +112,7 @@ def test(model, test_loader):
 
 def main():
   data = Dataset()
-  train_data, test_data = random_split(data, [int(0.9 * len(data)), int(0.1 * len(data))])
+  train_data, test_data = random_split(data, [0.9, 0.1])
   train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
   test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
   
