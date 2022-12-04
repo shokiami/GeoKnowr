@@ -61,8 +61,7 @@ def scrape_images():
   os.makedirs(IMAGES_DIR)
 
   with sync_playwright() as playwright:
-    webkit = playwright.webkit
-    browser = webkit.launch()
+    browser = playwright.webkit.launch()
     context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
     page = context.new_page()
 
