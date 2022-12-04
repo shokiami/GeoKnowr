@@ -24,6 +24,8 @@ class Dataset(torch.utils.data.Dataset):
     lng = image['lng']
     image_path = f"{IMAGES_DIR}/{pano_id}.png"
     image = io.read_image(image_path)
+    if image.shape[0] == 4:
+      image = image[:3]
     return image, (lat, lng)
 
 class GeoNet(nn.Module):
