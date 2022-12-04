@@ -36,7 +36,7 @@ def find_locations():
 
       metadata = requests.get(metadata_url, metadata_params).json()
       location_found = metadata['status'] == 'OK' and metadata['copyright'] == '© Google'
-    
+
     pano_id = metadata['pano_id']
     lat = metadata['location']['lat']
     lng = metadata['location']['lng']
@@ -70,7 +70,7 @@ def scrape_images():
       pano_id = image['pano_id']
       lat = image['lat']
       lng = image['lng']
-    
+
       heading = random.uniform(0, 360)
 
       gsv_url = f'https://www.google.com/maps/@{lat},{lng},3a,75y,{heading}h,90t/data=!3m6!1e1!3m4!1s{pano_id}!2e0!7i16384!8i8192'
@@ -102,7 +102,7 @@ def scrape_images():
       page.screenshot(path=f'{IMAGES_DIR}/{pano_id}.png')
 
       print(f'scraped {i + 1}/{NUM_IMAGES}: {round(perf_counter() - start, 1)}s')
-    
+
     browser.close()
 
   print('finished scraping images!')
