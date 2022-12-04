@@ -125,7 +125,7 @@ def main():
     test_loss = test(model, test_loader)
     train_losses.append(train_loss)
     test_losses.append(test_loss)
-    print(f"Epoch: {epoch}, Train loss: {train_loss}, Test loss: {test_loss}")
+    print(f"Epoch: {epoch + 1}, Train loss: {train_loss}, Test loss: {test_loss}")
   
   plt.figure(1)
   plt.plot(range(EPOCHS), train_losses, label="Train")
