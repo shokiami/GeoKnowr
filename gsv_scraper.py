@@ -12,11 +12,9 @@ IMAGES_CSV = 'images.csv'
 IMAGES_DIR = 'images'
 API_KEY = 'key.txt'
 
-# start timer
-start = perf_counter()
-import csv  
-
 def main():
+  start = perf_counter()  # start timer
+
   if not os.path.exists(IMAGES_CSV):
     with open(IMAGES_CSV, 'w') as f:
       writer = csv.writer(f)
@@ -89,6 +87,8 @@ def main():
 
       writer.writerow([pano_id, lat, lng])
       page.screenshot(path=f'{IMAGES_DIR}/{pano_id}.png')
-      print(f'scraped {i + 1}/{NUM_IMAGES}: {round(perf_counter() - start, 1)}s')
+      print(f'scraped: {i + 1}/{NUM_IMAGES}, time: {round(perf_counter() - start, 1)}s')
+
+  print(f"done!")
 
 main()
