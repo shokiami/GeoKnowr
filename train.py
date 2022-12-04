@@ -10,11 +10,10 @@ import numpy as np
 
 IMAGES_CSV = 'images.csv'
 IMAGES_DIR = 'images'
-BATCH_SIZE = 64
-EPOCHS = 20
+BATCH_SIZE = 32
+EPOCHS = 5
 LEARNING_RATE = 0.01
 MOMENTUM = 0.9
-
 
 class Dataset(torch.utils.data.Dataset):
   def __init__(self):
@@ -81,32 +80,34 @@ class GeoNet(nn.Module):
     return x
 
   def loss(self, pred, label):
-    lat1 = torch.deg2rad(pred[0])
-    lng1 = torch.deg2rad(pred[1])
-    lat2 = torch.deg2rad(label[0])
-    lng2 = torch.deg2rad(label[1])
-    return torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1))
+    lat1 = torch.deg2rad(torch.index_select(pred, 1, torch.tensor([0])))
+    lng1 = torch.deg2rad(torch.index_select(pred, 1, torch.tensor([1])))
+    lat2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([0])))
+    lng2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([1])))
+    return torch.mean(torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1)))
 
 def train(model, train_loader, optimizer):
   model.train()
   losses = []
-  for (batch, labels) in train_loader:
+  for batch, (images, labels) in enumerate(train_loader):
     optimizer.zero_grad()
-    labels_pred = model(batch)
+    labels_pred = model(images)
     loss = model.loss(labels_pred, labels)
     loss.backward()
     optimizer.step()
     losses.append(loss.item())
+    print(f"Training... batch: {batch + 1}/{len(train_loader)}")
   return np.mean(losses)
-    
+
 def test(model, test_loader):
   model.eval()
   losses = []
-  for (batch, labels) in test_loader:
+  for batch, (images, labels) in enumerate(test_loader):
     with torch.no_grad():
-      labels_pred = model(batch)
+      labels_pred = model(images)
     loss = model.loss(labels_pred, labels)
     losses.append(loss.item())
+    print(f"Testing... batch: {batch + 1}/{len(test_loader)}")
   return np.mean(losses)
 
 def main():
