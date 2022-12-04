@@ -6,7 +6,7 @@ import shutil
 import random
 from time import perf_counter
 
-NUM_IMAGES = 1
+NUM_IMAGES = 20
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
 IMAGES_CSV = 'images.csv'
@@ -65,7 +65,7 @@ def scrape_images():
     context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
     page = context.new_page()
 
-    for i in range(NUM_IMAGES):
+    for i in range(len(images_df)):
       image = images_df.iloc[i]
       pano_id = image['pano_id']
       lat = image['lat']
@@ -101,7 +101,7 @@ def scrape_images():
 
       page.screenshot(path=f'{IMAGES_DIR}/{pano_id}.png')
 
-      print(f'scraped {i + 1}/{NUM_IMAGES}: {round(perf_counter() - start, 1)}s')
+      print(f'scraped {i + 1}/{len(images_df)}: {round(perf_counter() - start, 1)}s')
 
     browser.close()
 
