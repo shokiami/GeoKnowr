@@ -80,6 +80,9 @@ def scrape_images():
       js_injection = """
         canvas = document.querySelector('canvas');
         context = canvas.getContext('webgl');
+        if (context == null) {
+          context = canvas.getContext('webgl2');
+        }
         context.drawArrays = function() { }
       """
       page.evaluate_handle(js_injection)
