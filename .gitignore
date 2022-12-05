@@ -1,5 +1,4 @@
 .DS_Store
 key.txt
-*.png
-*.csv
-*.pt
+gsv_scraper_out/
+train_out/
