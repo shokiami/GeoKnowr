@@ -1,26 +1,38 @@
 import requests
 from playwright.sync_api import sync_playwright, TimeoutError
-import pandas as pd
 import os
+import csv
 import random
-import multiprocessing as mp
 from time import perf_counter
 
-NUM_IMAGES = 10000
+NUM_IMAGES = 100000
 IMAGE_WIDTH = 480
 IMAGE_HEIGHT = 360
 GSV_SCRAPER_OUT = 'gsv_scraper_out'
 IMAGES_CSV = os.path.join(GSV_SCRAPER_OUT, 'images.csv')
 IMAGES_DIR = os.path.join(GSV_SCRAPER_OUT, 'images')
 API_KEY = 'key.txt'
-NUM_THREADS = min(mp.cpu_count(), 8)
 
-def scrape_image(num_images, queue):
-  with sync_playwright() as playwright, playwright.webkit.launch() as browser:
+def main():
+  start = perf_counter()  # start timer
+
+  if not os.path.isdir(GSV_SCRAPER_OUT):
+    os.makedirs(GSV_SCRAPER_OUT)
+    with open(IMAGES_CSV, 'w') as f:
+      writer = csv.writer(f)
+      writer.writerow(['pano_id', 'lat', 'lng'])
+    os.makedirs(IMAGES_DIR)
+
+  with open(IMAGES_CSV, 'r') as f:
+    next(f)
+    prev_scraped = sum(1 for row in f)
+
+  with open(IMAGES_CSV, 'a') as f, sync_playwright() as playwright, playwright.webkit.launch() as browser:
+    writer = csv.writer(f)
     context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
     page = context.new_page()
 
-    for i in range(num_images):
+    for i in range(prev_scraped, NUM_IMAGES):
       try:
         location_found = False
 
@@ -69,52 +81,14 @@ def scrape_image(num_images, queue):
         """
         page.add_style_tag(content=elements_to_hide)
 
+        writer.writerow([pano_id, lat, lng])
         page.screenshot(path=os.path.join(IMAGES_DIR, f'{pano_id}.png'))
-
-        queue.put([pano_id, lat, lng])
-
+        print(f'scraped: {i + 1}/{NUM_IMAGES}, time: {round(perf_counter() - start, 1)}s')
+    
       except TimeoutError:
         pass
 
-  queue.put('done')
-
-if __name__ ==  "__main__":
-  start = perf_counter()  # start timer
-
-  if not os.path.isdir(GSV_SCRAPER_OUT):
-    os.makedirs(GSV_SCRAPER_OUT)
-    images_df = pd.DataFrame(columns=['pano_id', 'lat', 'lng'])
-    images_df.to_csv(IMAGES_CSV, index=False)
-    os.makedirs(IMAGES_DIR)
-
-  images_df = pd.read_csv(IMAGES_CSV)
-
-  left_to_scrape = NUM_IMAGES - len(images_df)
-  num_images = [left_to_scrape // NUM_THREADS for i in range(NUM_THREADS)]
-  extra = left_to_scrape % NUM_THREADS
-  for i in range(extra):
-    num_images[i] += 1
-
-  queue = mp.Queue()
-  processes = []
-  for i in range(NUM_THREADS):
-    process = mp.Process(target=scrape_image, args=(num_images[i], queue))
-    processes.append(process)
-
-  for process in processes:
-    process.start()
-
-  done_count = 0
-  while done_count < NUM_THREADS:
-    result = queue.get()
-    if result == 'done':
-      done_count += 1
-    else:
-      images_df.loc[len(images_df)] = result
-      images_df.to_csv(IMAGES_CSV, index=False)
-      print(f'scraped: {len(images_df)}/{NUM_IMAGES}, time: {round(perf_counter() - start, 1)}s')
-
-  for process in processes:
-    process.join()
-
   print(f'done!')
+
+if __name__ == '__main__':
+  main()

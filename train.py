@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import io
 import numpy as np
 import os
+import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
@@ -17,6 +18,7 @@ TRAIN_OUT = 'train_out'
 MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
 LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
 PLOT_PATH = os.path.join(TRAIN_OUT, 'losses.png')
+NUM_IMAGES = 10000
 NUM_EPOCHS = 20
 BATCH_SIZE = 32
 LEARNING_RATE = 0.01
@@ -115,10 +117,10 @@ def test(model, test_loader):
       losses.append(loss.item())
   return np.mean(losses)
 
-if __name__ ==  "__main__":
+def main():
   start = perf_counter()  # start timer
 
-  images_df = pd.read_csv(IMAGES_CSV)
+  images_df = pd.read_csv(IMAGES_CSV)[:NUM_IMAGES]
   train_size = int(0.9 * len(images_df))
   train_data = GeoData(images_df[:train_size])
   test_data = GeoData(images_df[train_size:])
@@ -127,11 +129,21 @@ if __name__ ==  "__main__":
 
   if not os.path.isdir(TRAIN_OUT):
     os.makedirs(TRAIN_OUT)
-    losses_df = pd.DataFrame(columns=['train_losse', 'test_losse'])
-    losses_df.to_csv(LOSSES_CSV, index=False)
+    with open(LOSSES_CSV, 'w') as f:
+      writer = csv.writer(f)
+      writer.writerow(['train_loss', 'test_loss'])
 
-  losses_df = pd.read_csv(LOSSES_CSV)
-  
+  prev_epochs = 0
+  train_losses = []
+  test_losses = []
+  with open(LOSSES_CSV, 'r') as f:
+    next(f)
+    for row in f:
+      prev_epochs += 1
+      train_loss, test_loss = eval(row)
+      train_losses.append(train_loss)
+      test_losses.append(test_loss)
+
   if os.path.isfile(MODEL_PATH):
     model = torch.load(MODEL_PATH)
   else:
@@ -139,23 +151,27 @@ if __name__ ==  "__main__":
 
   optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
 
-  for epoch in range(len(losses_df), NUM_EPOCHS):
-    train_loss = train(model, train_loader, optimizer)
-    test_loss = test(model, test_loader)
+  with open(LOSSES_CSV, 'a') as f:
+    writer = csv.writer(f)
+    for epoch in range(prev_epochs, NUM_EPOCHS):
+      train_loss = train(model, train_loader, optimizer)
+      test_loss = test(model, test_loader)
 
-    torch.save(model, MODEL_PATH)
-    losses_df.loc[len(losses_df)] = [train_loss, test_loss]
-    losses_df.to_csv(LOSSES_CSV, index=False)
+      torch.save(model, MODEL_PATH)
+      writer.writerow([train_loss, test_loss])
 
-    plt.figure()
-    plt.title('Loss vs. Epoch')
-    plt.plot(range(epoch + 1), losses_df['train_loss'].to_list(), label='Train')
-    plt.plot(range(epoch + 1), losses_df['test_loss'].to_list(), label='Test')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.savefig(PLOT_PATH)
+      plt.figure()
+      plt.title('Loss vs. Epoch')
+      plt.plot(range(epoch + 1), train_losses, label='Train')
+      plt.plot(range(epoch + 1), test_losses, label='Test')
+      plt.xlabel('Epoch')
+      plt.ylabel('Loss')
+      plt.legend()
+      plt.savefig(PLOT_PATH)
 
-    print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train loss: {train_loss}, test loss: {test_loss}, time: {round(perf_counter() - start, 1)}s')
+      print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train loss: {train_loss}, test loss: {test_loss}, time: {round(perf_counter() - start, 1)}s')
 
   print(f'done!')
+
+if __name__ == '__main__':
+  main()
