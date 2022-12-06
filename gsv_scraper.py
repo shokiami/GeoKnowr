@@ -24,9 +24,14 @@ def main():
       writer.writerow(['pano_id', 'lat', 'lng'])
     os.makedirs(IMAGES_DIR)
 
+  i = 0
+  pano_ids = set()
   with open(IMAGES_CSV, 'r') as images_csv:
     next(images_csv)
-    prev_scraped = sum(1 for row in images_csv)
+    for row in images_csv:
+      i += 1
+      pano_id = row.split(',')[0]
+      pano_ids.add(pano_id)
 
   with open(API_KEY, 'r') as api_key:
     key = api_key.read()
@@ -36,7 +41,7 @@ def main():
     context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
     page = context.new_page()
 
-    for i in range(prev_scraped, NUM_IMAGES):
+    while i < NUM_IMAGES:
       try:
         location_found = False
 
@@ -58,6 +63,9 @@ def main():
         lat = metadata['location']['lat']
         lng = metadata['location']['lng']
         heading = random.uniform(0, 360)
+
+        if pano_id in pano_ids:
+          continue
 
         url = f'https://www.google.com/maps/@{lat},{lng},3a,75y,{heading}h,90t/data=!3m6!1e1!3m4!1s{pano_id}!2e0!7i16384!8i8192'
         page.goto(url)
@@ -88,7 +96,8 @@ def main():
         writer.writerow([pano_id, lat, lng])
         page.screenshot(path=os.path.join(IMAGES_DIR, f'{pano_id}.png'))
         print(f'scraped: {i + 1}/{NUM_IMAGES}, time: {round(perf_counter() - start, 1)}s')
-    
+        i += 1
+
       except TimeoutError:
         pass
 

@@ -129,13 +129,13 @@ def main():
       writer = csv.writer(losses_csv)
       writer.writerow(['train_loss', 'test_loss'])
 
-  prev_epochs = 0
+  epoch = 0
   train_losses = []
   test_losses = []
   with open(LOSSES_CSV, 'r') as losses_csv:
     next(losses_csv)
     for row in losses_csv:
-      prev_epochs += 1
+      epoch += 1
       train_loss, test_loss = eval(row)
       train_losses.append(train_loss)
       test_losses.append(test_loss)
@@ -149,7 +149,7 @@ def main():
 
   with open(LOSSES_CSV, 'a') as losses_csv:
     writer = csv.writer(losses_csv)
-    for epoch in range(prev_epochs, NUM_EPOCHS):
+    while epoch < NUM_EPOCHS:
       train_loss = train(model, train_loader, optimizer)
       test_loss = test(model, test_loader)
 
@@ -169,6 +169,7 @@ def main():
       plt.savefig(PLOT_PATH)
 
       print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train loss: {train_loss}, test loss: {test_loss}, time: {round(perf_counter() - start, 1)}s')
+      epoch += 1
 
   print(f'done!')
 
