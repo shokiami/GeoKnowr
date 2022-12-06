@@ -11,6 +11,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
 
+NUM_EPOCHS = 20
+BATCH_SIZE = 32
+LEARNING_RATE = 0.01
+MOMENTUM = 0.9
+
 GSV_SCRAPER_OUT = 'gsv_scraper_out'
 IMAGES_CSV = os.path.join(GSV_SCRAPER_OUT, 'images.csv')
 IMAGES_DIR = os.path.join(GSV_SCRAPER_OUT, 'images')
@@ -18,11 +23,6 @@ TRAIN_OUT = 'train_out'
 MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
 LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
 PLOT_PATH = os.path.join(TRAIN_OUT, 'losses.png')
-NUM_IMAGES = 10000
-NUM_EPOCHS = 20
-BATCH_SIZE = 32
-LEARNING_RATE = 0.01
-MOMENTUM = 0.9
 
 class GeoData(Dataset):
   def __init__(self, images_df):
@@ -38,7 +38,7 @@ class GeoData(Dataset):
     lat = image['lat']
     lng = image['lng']
 
-    image_path = f'{IMAGES_DIR}/{pano_id}.png'
+    image_path = os.path.join(IMAGES_DIR, f'{pano_id}.png')
     image = io.read_image(image_path).float()
 
     if image.shape[0] == 4:  # remove alpha channel
@@ -86,20 +86,16 @@ class GeoNet(nn.Module):
     lng1 = torch.deg2rad(torch.index_select(pred, 1, torch.tensor([1])))
     lat2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([0])))
     lng2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([1])))
-
-    dlat = lat1 - lat2
-    dlng = torch.min(torch.remainder(lng1 - lng2, 360), torch.remainder(lng2 - lng1, 360))
-    return torch.mean(dlat * dlat + dlng * dlng)
-
-    # return torch.mean(torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1)))  # mean distance on unit sphere
+    # mean arc distance over the unit sphere
+    return torch.mean(torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1)))
 
 def train(model, train_loader, optimizer):
   model.train()
   losses = []
-  for batch, (images, labels) in enumerate(train_loader):
+  for batch, (images, label) in enumerate(train_loader):
     optimizer.zero_grad()
-    labels_pred = model(images)
-    loss = model.loss(labels_pred, labels)
+    pred = model(images)
+    loss = model.loss(pred, label)
     loss.backward()
     optimizer.step()
     losses.append(loss.item())
@@ -111,16 +107,16 @@ def test(model, test_loader):
   model.eval()
   losses = []
   with torch.no_grad():
-    for batch, (images, labels) in enumerate(test_loader):
-      labels_pred = model(images)
-      loss = model.loss(labels_pred, labels)
+    for batch, (images, label) in enumerate(test_loader):
+      pred = model(images)
+      loss = model.loss(pred, label)
       losses.append(loss.item())
   return np.mean(losses)
 
 def main():
   start = perf_counter()  # start timer
 
-  images_df = pd.read_csv(IMAGES_CSV)[:NUM_IMAGES]
+  images_df = pd.read_csv(IMAGES_CSV)
   train_size = int(0.9 * len(images_df))
   train_data = GeoData(images_df[:train_size])
   test_data = GeoData(images_df[train_size:])
@@ -129,16 +125,16 @@ def main():
 
   if not os.path.isdir(TRAIN_OUT):
     os.makedirs(TRAIN_OUT)
-    with open(LOSSES_CSV, 'w') as f:
-      writer = csv.writer(f)
+    with open(LOSSES_CSV, 'w') as losses_csv:
+      writer = csv.writer(losses_csv)
       writer.writerow(['train_loss', 'test_loss'])
 
   prev_epochs = 0
   train_losses = []
   test_losses = []
-  with open(LOSSES_CSV, 'r') as f:
-    next(f)
-    for row in f:
+  with open(LOSSES_CSV, 'r') as losses_csv:
+    next(losses_csv)
+    for row in losses_csv:
       prev_epochs += 1
       train_loss, test_loss = eval(row)
       train_losses.append(train_loss)
@@ -151,14 +147,17 @@ def main():
 
   optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
 
-  with open(LOSSES_CSV, 'a') as f:
-    writer = csv.writer(f)
+  with open(LOSSES_CSV, 'a') as losses_csv:
+    writer = csv.writer(losses_csv)
     for epoch in range(prev_epochs, NUM_EPOCHS):
       train_loss = train(model, train_loader, optimizer)
       test_loss = test(model, test_loader)
 
-      torch.save(model, MODEL_PATH)
+      train_losses.append(train_loss)
+      test_losses.append(test_loss)
       writer.writerow([train_loss, test_loss])
+
+      torch.save(model, MODEL_PATH)
 
       plt.figure()
       plt.title('Loss vs. Epoch')

@@ -1,4 +1,6 @@
 .DS_Store
+__pycache__
 key.txt
 gsv_scraper_out/
 train_out/
+test_out/

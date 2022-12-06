@@ -8,6 +8,7 @@ from time import perf_counter
 NUM_IMAGES = 100000
 IMAGE_WIDTH = 480
 IMAGE_HEIGHT = 360
+
 GSV_SCRAPER_OUT = 'gsv_scraper_out'
 IMAGES_CSV = os.path.join(GSV_SCRAPER_OUT, 'images.csv')
 IMAGES_DIR = os.path.join(GSV_SCRAPER_OUT, 'images')
@@ -18,17 +19,20 @@ def main():
 
   if not os.path.isdir(GSV_SCRAPER_OUT):
     os.makedirs(GSV_SCRAPER_OUT)
-    with open(IMAGES_CSV, 'w') as f:
-      writer = csv.writer(f)
+    with open(IMAGES_CSV, 'w') as images_csv:
+      writer = csv.writer(images_csv)
       writer.writerow(['pano_id', 'lat', 'lng'])
     os.makedirs(IMAGES_DIR)
 
-  with open(IMAGES_CSV, 'r') as f:
-    next(f)
-    prev_scraped = sum(1 for row in f)
+  with open(IMAGES_CSV, 'r') as images_csv:
+    next(images_csv)
+    prev_scraped = sum(1 for row in images_csv)
 
-  with open(IMAGES_CSV, 'a') as f, sync_playwright() as playwright, playwright.webkit.launch() as browser:
-    writer = csv.writer(f)
+  with open(API_KEY, 'r') as api_key:
+    key = api_key.read()
+
+  with open(IMAGES_CSV, 'a') as images_csv, sync_playwright() as playwright, playwright.webkit.launch() as browser:
+    writer = csv.writer(images_csv)
     context = browser.new_context(viewport={'width': IMAGE_WIDTH, 'height': IMAGE_HEIGHT})
     page = context.new_page()
 
@@ -40,14 +44,14 @@ def main():
           search_lat = random.uniform(-90, 90)
           search_lng = random.uniform(-180, 180)
 
-          metadata_url = 'https://maps.googleapis.com/maps/api/streetview/metadata'
-          metadata_params = {
+          url = 'https://maps.googleapis.com/maps/api/streetview/metadata'
+          params = {
             'location': f'{search_lat},{search_lng}',
             'radius': 10000,  # search radius in meters
-            'key': open(API_KEY).read()
+            'key': key
           }
 
-          metadata = requests.get(metadata_url, metadata_params).json()
+          metadata = requests.get(url, params).json()
           location_found = metadata['status'] == 'OK' and metadata['copyright'] == '© Google'
 
         pano_id = metadata['pano_id']
@@ -55,8 +59,8 @@ def main():
         lng = metadata['location']['lng']
         heading = random.uniform(0, 360)
 
-        gsv_url = f'https://www.google.com/maps/@{lat},{lng},3a,75y,{heading}h,90t/data=!3m6!1e1!3m4!1s{pano_id}!2e0!7i16384!8i8192'
-        page.goto(gsv_url)
+        url = f'https://www.google.com/maps/@{lat},{lng},3a,75y,{heading}h,90t/data=!3m6!1e1!3m4!1s{pano_id}!2e0!7i16384!8i8192'
+        page.goto(url)
 
         page.wait_for_selector('canvas', timeout=5000)  # wait for canvas to load
         js_injection = """
