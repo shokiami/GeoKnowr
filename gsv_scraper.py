@@ -5,7 +5,7 @@ import csv
 import random
 from time import perf_counter
 
-NUM_IMAGES = 100000
+NUM_IMAGES = 16000
 IMAGE_WIDTH = 480
 IMAGE_HEIGHT = 360
 

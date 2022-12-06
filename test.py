@@ -1,6 +1,7 @@
 from train import GeoNet
 import torch
 from torchvision import io
+import numpy as np
 import requests
 import os
 import shutil
@@ -8,7 +9,6 @@ import pandas as pd
 import random
 
 NUM_EXAMPLES = 5
-EARTH_RADIUS = 6371  # in kilometers
 MAP_WIDTH = 480
 MAP_HEIGHT = 360
 
@@ -21,6 +21,13 @@ LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
 PLOT_PATH = os.path.join(TRAIN_OUT, 'losses.png')
 TEST_OUT = 'test_out'
 API_KEY = 'key.txt'
+
+def distance(lat1, lng1, lat2, lng2):
+  lat1 = np.deg2rad(lat1)
+  lng1 = np.deg2rad(lng1)
+  lat2 = np.deg2rad(lat2)
+  lng2 = np.deg2rad(lng2)
+  return 6371 * np.arccos(np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * np.cos(lng2 - lng1))
 
 def main():
   shutil.rmtree(TEST_OUT)
@@ -46,16 +53,13 @@ def main():
     image = io.read_image(image_path).float()
     if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
-    image = image.unsqueeze(0)
-    label = torch.FloatTensor([lat, lng]).unsqueeze(0)
     
     with torch.no_grad():
-      pred = model(image)
+      pred = model(image.unsqueeze(0))
 
-    pred_lat = torch.index_select(pred, 1, torch.tensor([0])).item()
-    pred_lng = torch.index_select(pred, 1, torch.tensor([1])).item()
+    pred_lat, pred_lng = pred[0].numpy()
 
-    dist = EARTH_RADIUS * model.loss(pred, label).item()
+    dist = distance(pred_lat, pred_lng, lat, lng)
 
     url = 'https://maps.googleapis.com/maps/api/staticmap'
     params = {
@@ -70,7 +74,7 @@ def main():
     print(f'example {i + 1}/{NUM_EXAMPLES}:')
     print(f'actual: {lat}, {lng}')
     print(f'guess: {pred_lat}, {pred_lng}')
-    print(f'distance: {dist}km')
+    print(f'distance (km): {dist}')
     print()
 
 if __name__ == '__main__':
