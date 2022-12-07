@@ -57,17 +57,18 @@ class GeoNet(nn.Module):
     self.conv_layers = []
     for i in range(self.num_conv_blocks):
       if i == 0:
-        self.conv_layers.append(nn.Conv2d(3, 8, 3, stride=1, padding=1))
+        self.conv_layers.append(nn.Conv2d(3, 16, 3, stride=1, padding=1))
       else:
-        self.conv_layers.append(nn.Conv2d(2**(i + 2), 2**(i + 3), 3, stride=1, padding=1))
+        self.conv_layers.append(nn.Conv2d(2**(i + 3), 2**(i + 4), 3, stride=1, padding=1))
     
     self.bn_layers = []
     for i in range(self.num_conv_blocks):
-      self.bn_layers.append(nn.BatchNorm2d(2**(i + 3)))
+      self.bn_layers.append(nn.BatchNorm2d(2**(i + 4)))
 
     self.mp = nn.MaxPool2d(3, stride=2, padding=1)
 
-    self.fc = nn.Linear(6144, 2)
+    self.fc1 = nn.Linear(12288, 6144)
+    self.fc2 = nn.Linear(6144, 2)
 
   def forward(self, x):
     for i in range(self.num_conv_blocks):
@@ -77,17 +78,20 @@ class GeoNet(nn.Module):
       x = self.mp(x)
 
     x = torch.flatten(x, 1)
-    x = self.fc(x)
+    x = self.fc1(x)
+    x = F.relu(x)
+    x = self.fc2(x)
 
     return x
 
   def loss(self, pred, label):
-    lat1 = torch.deg2rad(torch.index_select(pred, 1, torch.tensor([0])))
-    lng1 = torch.deg2rad(torch.index_select(pred, 1, torch.tensor([1])))
-    lat2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([0])))
-    lng2 = torch.deg2rad(torch.index_select(label, 1, torch.tensor([1])))
+    lat1 = torch.deg2rad(pred[:,0])
+    lng1 = torch.deg2rad(pred[:,1])
+    lat2 = torch.deg2rad(label[:,0])
+    lng2 = torch.deg2rad(label[:,1])
     # mean arc distance over the unit sphere
-    return torch.mean(torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1)))
+    dist = torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1))
+    return torch.mean(dist)
 
 def train(model, train_loader, optimizer):
   model.train()

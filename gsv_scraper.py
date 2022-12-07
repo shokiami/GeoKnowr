@@ -5,7 +5,7 @@ import csv
 import random
 from time import perf_counter
 
-NUM_IMAGES = 16000
+NUM_IMAGES = 32000
 IMAGE_WIDTH = 480
 IMAGE_HEIGHT = 360
 
@@ -93,6 +93,7 @@ def main():
         """
         page.add_style_tag(content=elements_to_hide)
 
+        pano_ids.add(pano_id)
         writer.writerow([pano_id, lat, lng])
         page.screenshot(path=os.path.join(IMAGES_DIR, f'{pano_id}.png'))
         print(f'scraped: {i + 1}/{NUM_IMAGES}, time: {round(perf_counter() - start, 1)}s')
