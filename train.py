@@ -12,9 +12,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-NUM_EPOCHS = 20
+NUM_EPOCHS = 30
 BATCH_SIZE = 32
-LEARNING_RATE = 0.01
+LEARNING_RATES = [0.1, 0.01, 0.001]
 MOMENTUM = 0.9
 
 TRAIN_OUT = 'train_out'
@@ -48,40 +48,66 @@ class GeoData(Dataset):
 
     return image, label
 
+class ResBlock(nn.Module):
+  def __init__(self, in_channels, out_channels):
+    super(ResBlock, self).__init__()
+    self.downsample = out_channels > in_channels
+    self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2 if self.downsample else 1, padding=1)
+    self.bn1 = nn.BatchNorm2d(out_channels)
+    self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
+    self.bn2 = nn.BatchNorm2d(out_channels)
+    if self.downsample:
+      self.conv3 = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2)
+      self.bn3 = nn.BatchNorm2d(out_channels)
+
+  def forward(self, x):
+    r = x
+    x = self.conv1(x)
+    x = self.bn1(x)
+    x = F.relu(x)
+    x = self.conv2(x)
+    x = self.bn2(x)
+    if self.downsample:
+      r = self.conv3(r)
+      r = self.bn3(r)
+    x += r
+    x = F.relu(x)
+    return x
+
 class GeoNet(nn.Module):
   def __init__(self):
     super(GeoNet, self).__init__()
-
-    self.num_conv_blocks = 7
-
-    self.conv_layers = []
-    for i in range(self.num_conv_blocks):
-      if i == 0:
-        self.conv_layers.append(nn.Conv2d(3, 16, 3, stride=1, padding=1))
-      else:
-        self.conv_layers.append(nn.Conv2d(2**(i + 3), 2**(i + 4), 3, stride=1, padding=1))
-    
-    self.bn_layers = []
-    for i in range(self.num_conv_blocks):
-      self.bn_layers.append(nn.BatchNorm2d(2**(i + 4)))
-
-    self.mp = nn.MaxPool2d(3, stride=2, padding=1)
-
-    self.fc1 = nn.Linear(12288, 6144)
-    self.fc2 = nn.Linear(6144, 2)
+    self.conv = nn.Conv2d(3, 8, kernel_size=7, stride=2, padding=3)
+    self.bn = nn.BatchNorm2d(8)
+    self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+    self.res_blocks = nn.Sequential(
+      ResBlock(8, 8),
+      ResBlock(8, 8),
+      ResBlock(8, 8),
+      ResBlock(8, 16),
+      ResBlock(16, 16),
+      ResBlock(16, 16),
+      ResBlock(16, 16),
+      ResBlock(16, 32),
+      ResBlock(32, 32),
+      ResBlock(32, 32),
+      ResBlock(32, 32),
+      ResBlock(32, 32),
+      ResBlock(32, 32),
+      ResBlock(32, 64),
+      ResBlock(64, 64),
+      ResBlock(64, 64)
+    )
+    self.fc = nn.Linear(3072, 2)
 
   def forward(self, x):
-    for i in range(self.num_conv_blocks):
-      x = self.conv_layers[i](x)
-      x = self.bn_layers[i](x)
-      x = F.relu(x)
-      x = self.mp(x)
-
-    x = torch.flatten(x, 1)
-    x = self.fc1(x)
+    x = self.conv(x)
     x = F.relu(x)
-    x = self.fc2(x)
-
+    x = self.maxpool(x)
+    x = self.res_blocks(x)
+    x = self.maxpool(x)
+    x = torch.flatten(x, 1)
+    x = self.fc(x)
     return x
 
   def loss(self, pred, label):
@@ -147,11 +173,18 @@ def main():
   else:
     model = GeoNet()
 
-  optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
+  epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
+  learning_rate = LEARNING_RATES[epoch // epochs_per_lr]
+  optimizer = optim.Adam(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
 
   with open(LOSSES_CSV, 'a') as losses_csv:
     writer = csv.writer(losses_csv)
+
     while epoch < NUM_EPOCHS:
+      epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
+      learning_rate = LEARNING_RATES[min(epoch // epochs_per_lr, len(LEARNING_RATES))]
+      optimizer = optim.Adam(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
+
       train_loss = train(model, train_loader, optimizer)
       test_loss = test(model, test_loader)
 
