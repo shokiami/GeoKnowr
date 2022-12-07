@@ -173,10 +173,6 @@ def main():
   else:
     model = GeoNet()
 
-  epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
-  learning_rate = LEARNING_RATES[epoch // epochs_per_lr]
-  optimizer = optim.Adam(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
-
   with open(LOSSES_CSV, 'a') as losses_csv:
     writer = csv.writer(losses_csv)
 
