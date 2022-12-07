@@ -1,5 +1,5 @@
 from gsv_scraper import IMAGES_CSV, IMAGES_DIR, API_KEY
-from train import MODEL_PATH, GeoNet
+from train import MODEL_PATH, GeoNet, ResBlock
 import torch
 from torchvision import io
 import numpy as np

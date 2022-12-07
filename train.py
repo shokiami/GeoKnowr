@@ -15,6 +15,7 @@ from time import perf_counter
 NUM_EPOCHS = 30
 BATCH_SIZE = 32
 LEARNING_RATES = [0.1, 0.01, 0.001]
+MOMENTUM = 0.9
 
 TRAIN_OUT = 'train_out'
 MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
@@ -76,35 +77,32 @@ class ResBlock(nn.Module):
 class GeoNet(nn.Module):
   def __init__(self):
     super(GeoNet, self).__init__()
-    self.conv = nn.Conv2d(3, 8, kernel_size=7, stride=2, padding=3)
-    self.bn = nn.BatchNorm2d(8)
+    self.conv = nn.Conv2d(3, 32, kernel_size=7, stride=2, padding=3)
+    self.bn = nn.BatchNorm2d(32)
     self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-    self.res_blocks = nn.Sequential(
-      ResBlock(8, 8),
-      ResBlock(8, 8),
-      ResBlock(8, 8),
-      ResBlock(8, 16),
-      ResBlock(16, 16),
-      ResBlock(16, 16),
-      ResBlock(16, 16),
-      ResBlock(16, 32),
-      ResBlock(32, 32),
-      ResBlock(32, 32),
-      ResBlock(32, 32),
+    self.res_blocks = [
       ResBlock(32, 32),
       ResBlock(32, 32),
       ResBlock(32, 64),
       ResBlock(64, 64),
-      ResBlock(64, 64)
-    )
-    self.fc = nn.Linear(3072, 2)
+      ResBlock(64, 128),
+      ResBlock(128, 128),
+      ResBlock(128, 256),
+      ResBlock(256, 256),
+      ResBlock(256, 512),
+      ResBlock(512, 512)
+    ]
+    self.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+    self.fc = nn.Linear(512, 2)
 
   def forward(self, x):
     x = self.conv(x)
+    x = self.bn(x)
     x = F.relu(x)
     x = self.maxpool(x)
-    x = self.res_blocks(x)
-    x = self.maxpool(x)
+    for res_block in self.res_blocks:
+      x = res_block(x)
+    x = self.avgpool(x)
     x = torch.flatten(x, 1)
     x = self.fc(x)
     return x
@@ -178,7 +176,7 @@ def main():
     while epoch < NUM_EPOCHS:
       epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
       learning_rate = LEARNING_RATES[min(epoch // epochs_per_lr, len(LEARNING_RATES))]
-      optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+      optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
 
       train_loss = train(model, train_loader, optimizer)
       test_loss = test(model, test_loader)
