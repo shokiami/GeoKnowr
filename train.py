@@ -15,7 +15,6 @@ from time import perf_counter
 NUM_EPOCHS = 30
 BATCH_SIZE = 32
 LEARNING_RATES = [0.1, 0.01, 0.001]
-MOMENTUM = 0.9
 
 TRAIN_OUT = 'train_out'
 MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
@@ -179,7 +178,7 @@ def main():
     while epoch < NUM_EPOCHS:
       epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
       learning_rate = LEARNING_RATES[min(epoch // epochs_per_lr, len(LEARNING_RATES))]
-      optimizer = optim.Adam(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
+      optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
       train_loss = train(model, train_loader, optimizer)
       test_loss = test(model, test_loader)
