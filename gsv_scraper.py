@@ -14,9 +14,9 @@ IMAGES_CSV = os.path.join(GSV_SCRAPER_OUT, 'images.csv')
 IMAGES_DIR = os.path.join(GSV_SCRAPER_OUT, 'images')
 API_KEY = 'key.txt'
 
-def main():
-  start = perf_counter()  # start timer
+start_time = perf_counter()
 
+def main():
   if not os.path.isdir(GSV_SCRAPER_OUT):
     os.makedirs(GSV_SCRAPER_OUT)
     with open(IMAGES_CSV, 'w') as images_csv:
@@ -96,7 +96,7 @@ def main():
         pano_ids.add(pano_id)
         writer.writerow([pano_id, lat, lng])
         page.screenshot(path=os.path.join(IMAGES_DIR, f'{pano_id}.png'))
-        print(f'scraped: {i + 1}/{NUM_IMAGES}, time: {round(perf_counter() - start, 1)}s')
+        print(f'scraped: {i + 1}/{NUM_IMAGES}, time: {round(perf_counter() - start_time, 1)}s')
         i += 1
 
       except TimeoutError:

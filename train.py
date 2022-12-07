@@ -1,3 +1,4 @@
+from gsv_scraper import IMAGES_CSV, IMAGES_DIR
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,13 +17,12 @@ BATCH_SIZE = 32
 LEARNING_RATE = 0.01
 MOMENTUM = 0.9
 
-GSV_SCRAPER_OUT = 'gsv_scraper_out'
-IMAGES_CSV = os.path.join(GSV_SCRAPER_OUT, 'images.csv')
-IMAGES_DIR = os.path.join(GSV_SCRAPER_OUT, 'images')
 TRAIN_OUT = 'train_out'
 MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
 LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
 PLOT_PATH = os.path.join(TRAIN_OUT, 'losses.png')
+
+start_time = perf_counter()
 
 class GeoData(Dataset):
   def __init__(self, images_df):
@@ -103,7 +103,7 @@ def train(model, train_loader, optimizer):
     loss.backward()
     optimizer.step()
     losses.append(loss.item())
-    print(f'batch: {batch + 1}/{len(train_loader)}, train loss: {loss.item()}')
+    print(f'batch: {batch + 1}/{len(train_loader)}, train loss: {loss.item()}, time: {round(perf_counter() - start_time, 1)}s')
   return np.mean(losses)
 
 def test(model, test_loader):
@@ -118,8 +118,6 @@ def test(model, test_loader):
   return np.mean(losses)
 
 def main():
-  start = perf_counter()  # start timer
-
   images_df = pd.read_csv(IMAGES_CSV)
   train_size = int(0.9 * len(images_df))
   train_data = GeoData(images_df[:train_size])
@@ -172,7 +170,7 @@ def main():
       plt.legend()
       plt.savefig(PLOT_PATH)
 
-      print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train loss: {train_loss}, test loss: {test_loss}, time: {round(perf_counter() - start, 1)}s')
+      print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train loss: {train_loss}, test loss: {test_loss}, time: {round(perf_counter() - start_time, 1)}s')
       epoch += 1
 
   print(f'done!')

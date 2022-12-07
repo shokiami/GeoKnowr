@@ -1,4 +1,5 @@
-from train import GeoNet
+from gsv_scraper import IMAGES_CSV, IMAGES_DIR, API_KEY
+from train import MODEL_PATH, GeoNet
 import torch
 from torchvision import io
 import numpy as np
@@ -12,15 +13,7 @@ NUM_EXAMPLES = 5
 MAP_WIDTH = 480
 MAP_HEIGHT = 360
 
-GSV_SCRAPER_OUT = 'gsv_scraper_out'
-IMAGES_CSV = os.path.join(GSV_SCRAPER_OUT, 'images.csv')
-IMAGES_DIR = os.path.join(GSV_SCRAPER_OUT, 'images')
-TRAIN_OUT = 'train_out'
-MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
-LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
-PLOT_PATH = os.path.join(TRAIN_OUT, 'losses.png')
 TEST_OUT = 'test_out'
-API_KEY = 'key.txt'
 
 def distance(lat1, lng1, lat2, lng2):
   lat1 = np.deg2rad(lat1)
