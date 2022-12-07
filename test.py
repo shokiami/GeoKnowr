@@ -23,7 +23,8 @@ def distance(lat1, lng1, lat2, lng2):
   return 6371 * np.arccos(np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * np.cos(lng2 - lng1))
 
 def main():
-  shutil.rmtree(TEST_OUT)
+  if os.path.isdir(TEST_OUT):
+    shutil.rmtree(TEST_OUT)
   os.makedirs(TEST_OUT)
 
   with open(API_KEY, 'r') as api_key:
