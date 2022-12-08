@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import io
+import torchvision.transforms as T
 import numpy as np
 import os
 import csv
@@ -12,15 +13,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-NUM_EPOCHS = 30
+RESOLUTION = 30
+RESIZE_WIDTH = 240
+RESIZE_HEIGHT = 180
+NUM_EPOCHS = 20
 BATCH_SIZE = 32
-LEARNING_RATES = [0.1, 0.01, 0.001]
-MOMENTUM = 0.9
+LEARNING_RATES = [0.001, 0.0001]
+MOMENTUM = 0.99
 
 TRAIN_OUT = 'train_out'
 MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
 LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
-PLOT_PATH = os.path.join(TRAIN_OUT, 'losses.png')
+ACCURACIES_CSV = os.path.join(TRAIN_OUT, 'accuracies.csv')
+LOSSES_PLOT = os.path.join(TRAIN_OUT, 'losses.png')
+ACCURACIES_PLOT = os.path.join(TRAIN_OUT, 'accuracies.png')
 
 start_time = perf_counter()
 
@@ -28,6 +34,7 @@ class GeoData(Dataset):
   def __init__(self, images_df):
     super(Dataset, self).__init__()
     self.images_df = images_df
+    self.resize = T.Resize((RESIZE_HEIGHT, RESIZE_WIDTH))
 
   def __len__(self):
     return len(self.images_df)
@@ -40,11 +47,11 @@ class GeoData(Dataset):
 
     image_path = os.path.join(IMAGES_DIR, f'{pano_id}.png')
     image = io.read_image(image_path).float()
-
     if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
+    image = self.resize(image)
 
-    label = torch.FloatTensor([lat, lng])
+    label = torch.LongTensor([(360 // RESOLUTION) * ((lat + 90) // RESOLUTION) + ((lng + 180) // RESOLUTION)])
 
     return image, label
 
@@ -77,23 +84,23 @@ class ResBlock(nn.Module):
 class GeoNet(nn.Module):
   def __init__(self):
     super(GeoNet, self).__init__()
-    self.conv = nn.Conv2d(3, 32, kernel_size=7, stride=2, padding=3)
-    self.bn = nn.BatchNorm2d(32)
+    self.conv = nn.Conv2d(3, 8, kernel_size=7, stride=2, padding=3)
+    self.bn = nn.BatchNorm2d(8)
     self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
     self.res_blocks = [
-      ResBlock(32, 32),
+      ResBlock(8, 8),
+      ResBlock(8, 8),
+      ResBlock(8, 16),
+      ResBlock(16, 16),
+      ResBlock(16, 32),
       ResBlock(32, 32),
       ResBlock(32, 64),
       ResBlock(64, 64),
       ResBlock(64, 128),
-      ResBlock(128, 128),
-      ResBlock(128, 256),
-      ResBlock(256, 256),
-      ResBlock(256, 512),
-      ResBlock(512, 512)
+      ResBlock(128, 128)
     ]
     self.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
-    self.fc = nn.Linear(512, 2)
+    self.fc = nn.Linear(128, (180 // RESOLUTION) * (360 // RESOLUTION))
 
   def forward(self, x):
     x = self.conv(x)
@@ -107,38 +114,44 @@ class GeoNet(nn.Module):
     x = self.fc(x)
     return x
 
-  def loss(self, pred, label):
-    lat1 = torch.deg2rad(pred[:,0])
-    lng1 = torch.deg2rad(pred[:,1])
-    lat2 = torch.deg2rad(label[:,0])
-    lng2 = torch.deg2rad(label[:,1])
-    # mean arc distance over the unit sphere
-    dist = torch.arccos(torch.sin(lat1) * torch.sin(lat2) + torch.cos(lat1) * torch.cos(lat2) * torch.cos(lng2 - lng1))
-    return torch.mean(dist)
+  def loss(self, pred, labels):
+    return F.cross_entropy(pred, labels)
 
 def train(model, train_loader, optimizer):
   model.train()
   losses = []
-  for batch, (images, label) in enumerate(train_loader):
+  accuracies = []
+  for batch, (images, labels) in enumerate(train_loader):
+    labels = labels.squeeze()
     optimizer.zero_grad()
     pred = model(images)
-    loss = model.loss(pred, label)
+    loss = model.loss(pred, labels)
     loss.backward()
     optimizer.step()
     losses.append(loss.item())
-    print(f'batch: {batch + 1}/{len(train_loader)}, train loss: {loss.item()}, time: {round(perf_counter() - start_time, 1)}s')
-  return np.mean(losses)
+    accuracy = torch.sum(torch.argmax(pred, 1) == labels) / len(labels)
+    accuracies.append(accuracy.item())
+    print(f'batch: {batch + 1}/{len(train_loader)}, train loss: {loss.item()}, train accuracy: {accuracy.item()}, time: {round(perf_counter() - start_time, 1)}s')
+  train_loss = np.mean(losses)
+  train_accuracy = np.mean(accuracies)
+  return train_loss, train_accuracy
 
 def test(model, test_loader):
   print('testing...')
   model.eval()
   losses = []
+  accuracies = []
   with torch.no_grad():
-    for batch, (images, label) in enumerate(test_loader):
+    for batch, (images, labels) in enumerate(test_loader):
+      labels = labels.squeeze()
       pred = model(images)
-      loss = model.loss(pred, label)
+      loss = model.loss(pred, labels)
       losses.append(loss.item())
-  return np.mean(losses)
+      accuracy = torch.sum(torch.argmax(pred, 1) == labels) / len(labels)
+      accuracies.append(accuracy.item())
+  test_loss = np.mean(losses)
+  test_accuracy = np.mean(accuracies)
+  return test_loss, test_accuracy
 
 def main():
   images_df = pd.read_csv(IMAGES_CSV)
@@ -151,8 +164,11 @@ def main():
   if not os.path.isdir(TRAIN_OUT):
     os.makedirs(TRAIN_OUT)
     with open(LOSSES_CSV, 'w') as losses_csv:
-      writer = csv.writer(losses_csv)
-      writer.writerow(['train_loss', 'test_loss'])
+      loss_writer = csv.writer(losses_csv)
+      loss_writer.writerow(['train_loss', 'test_loss'])
+    with open(ACCURACIES_CSV, 'w') as accuracies_csv:
+      accuracy_writer = csv.writer(accuracies_csv)
+      accuracy_writer.writerow(['train_accuray', 'test_accuracy'])
 
   epoch = 0
   train_losses = []
@@ -164,26 +180,40 @@ def main():
       train_loss, test_loss = eval(row)
       train_losses.append(train_loss)
       test_losses.append(test_loss)
+  
+  train_accuracies = []
+  test_accuracies = []
+  with open(ACCURACIES_CSV, 'r') as accuracies_csv:
+    next(accuracies_csv)
+    for row in accuracies_csv:
+      train_accuracy, test_accuracy = eval(row)
+      train_accuracies.append(train_accuracy)
+      test_accuracies.append(test_accuracy)
 
   if os.path.isfile(MODEL_PATH):
     model = torch.load(MODEL_PATH)
   else:
     model = GeoNet()
 
-  with open(LOSSES_CSV, 'a') as losses_csv:
-    writer = csv.writer(losses_csv)
+  with open(LOSSES_CSV, 'a') as losses_csv, open(ACCURACIES_CSV, 'a') as accuracies_csv:
+    loss_writer = csv.writer(losses_csv)
+    accuracy_writer = csv.writer(accuracies_csv)
 
     while epoch < NUM_EPOCHS:
       epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
       learning_rate = LEARNING_RATES[min(epoch // epochs_per_lr, len(LEARNING_RATES))]
       optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
 
-      train_loss = train(model, train_loader, optimizer)
-      test_loss = test(model, test_loader)
+      train_loss, train_accuracy = train(model, train_loader, optimizer)
+      test_loss, test_accuracy = test(model, test_loader)
 
       train_losses.append(train_loss)
       test_losses.append(test_loss)
-      writer.writerow([train_loss, test_loss])
+      loss_writer.writerow([train_loss, test_loss])
+
+      train_accuracies.append(train_accuracy)
+      test_accuracies.append(test_accuracy)
+      accuracy_writer.writerow([train_accuracy, test_accuracy])
 
       torch.save(model, MODEL_PATH)
 
@@ -194,9 +224,18 @@ def main():
       plt.xlabel('Epoch')
       plt.ylabel('Loss')
       plt.legend()
-      plt.savefig(PLOT_PATH)
+      plt.savefig(LOSSES_PLOT)
 
-      print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train loss: {train_loss}, test loss: {test_loss}, time: {round(perf_counter() - start_time, 1)}s')
+      plt.figure()
+      plt.title('Accuracy vs. Epoch')
+      plt.plot(range(epoch + 1), train_accuracies, label='Train')
+      plt.plot(range(epoch + 1), test_accuracies, label='Test')
+      plt.xlabel('Epoch')
+      plt.ylabel('Accuracy')
+      plt.legend()
+      plt.savefig(ACCURACIES_PLOT)
+
+      print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train accuracy: {train_accuracy}, test accuracy: {test_accuracy}, time: {round(perf_counter() - start_time, 1)}s')
       epoch += 1
 
   print(f'done!')
