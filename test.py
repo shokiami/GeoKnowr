@@ -1,8 +1,9 @@
 from gsv_scraper import IMAGES_CSV, IMAGES_DIR, API_KEY
-from train import RESOLUTION, RESIZE_WIDTH, RESIZE_HEIGHT, MODEL_PATH, GeoNet, ResBlock
+from train import NUM_CLASSES, RESIZE_WIDTH, RESIZE_HEIGHT, MODEL_PATH, GeoNet, ResBlock
 import torch
 from torchvision import io
 import torchvision.transforms as T
+from sklearn.mixture import GaussianMixture
 import numpy as np
 import requests
 import os
@@ -18,6 +19,11 @@ TEST_OUT = 'test_out'
 
 class GeoKnowr():
   def __init__(self):
+    images_df = pd.read_csv(IMAGES_CSV)
+    train_size = int(0.9 * len(images_df))
+    train_df = images_df[:train_size]
+    coords = train_df[['lat', 'lng']].to_numpy()
+    self.gm = GaussianMixture(n_components=NUM_CLASSES, random_state=0).fit(coords)
     self.model = torch.load(MODEL_PATH)
     self.model.eval()
     self.resize = T.Resize((RESIZE_HEIGHT, RESIZE_WIDTH))
@@ -31,12 +37,9 @@ class GeoKnowr():
     with torch.no_grad():
       pred = self.model(image.unsqueeze(0))
 
-    region = torch.argmax(pred).item()
-    print(region)
-    lat_idx = region // (360 // RESOLUTION)
-    lng_idx = region % (360 // RESOLUTION)
-    pred_lat = lat_idx * RESOLUTION + RESOLUTION / 2 - 90
-    pred_lng = lng_idx * RESOLUTION + RESOLUTION / 2 - 180
+    cluster = torch.argmax(pred).item()
+    print(cluster)
+    pred_lat, pred_lng = self.gm.means_[cluster]
 
     return pred_lat, pred_lng
 
@@ -55,15 +58,36 @@ def main():
   with open(API_KEY, 'r') as api_key:
     key = api_key.read()
 
+  # images_df = pd.read_csv(IMAGES_CSV)[:1000]
+  # train_size = int(0.9 * len(images_df))
+  # train_df = images_df[:train_size]
+  # coords = train_df[['lat', 'lng']].to_numpy()
+  # gm = GaussianMixture(n_components=NUM_CLASSES, random_state=0).fit(coords)
+  # regions = gm.predict(coords)
+
+  # colors = ['black', 'brown', 'green', 'purple', 'yellow', 'blue', 'gray', 'orange', 'red', 'white']
+
+  # url = 'https://maps.googleapis.com/maps/api/staticmap'
+  # params = {
+  #   'markers': [f'color:{colors[regions[i] % len(colors)]}|{coords[i][0]},{coords[i][1]}' for i in range(200)],
+  #   'size': f'{MAP_WIDTH}x{MAP_HEIGHT}',
+  #   'key': key
+  # }
+
+  # with open(os.path.join(TEST_OUT, f'map.png'), 'wb') as map_path:
+  #   map_path.write(requests.get(url, params).content)
+
+  # exit()
+
   images_df = pd.read_csv(IMAGES_CSV)
   train_size = int(0.9 * len(images_df))
-  images_df = images_df[train_size:]  # only want images from test set
-  images_df = images_df.iloc[random.sample(range(len(images_df)), NUM_EXAMPLES)]
+  test_df = images_df[train_size:]
+  vis_df = test_df.iloc[random.sample(range(len(test_df)), NUM_EXAMPLES)]
 
   geo_knowr = GeoKnowr()
 
-  for i in range(len(images_df)):
-    pano_id, lat, lng = images_df.iloc[i]
+  for i in range(len(vis_df)):
+    pano_id, lat, lng = vis_df.iloc[i]
 
     image_path = os.path.join(TEST_OUT, f'image_{i + 1}.png')
     shutil.copyfile(os.path.join(IMAGES_DIR, f'{pano_id}.png'), image_path)

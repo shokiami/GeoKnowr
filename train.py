@@ -6,6 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import io
 import torchvision.transforms as T
+from sklearn.mixture import GaussianMixture
 import numpy as np
 import os
 import csv
@@ -13,7 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-RESOLUTION = 30
+NUM_CLASSES = 20
 RESIZE_WIDTH = 240
 RESIZE_HEIGHT = 180
 NUM_EPOCHS = 15
@@ -31,9 +32,10 @@ ACCURACIES_PLOT = os.path.join(TRAIN_OUT, 'accuracies.png')
 start_time = perf_counter()
 
 class GeoData(Dataset):
-  def __init__(self, images_df):
+  def __init__(self, images_df, gm):
     super(Dataset, self).__init__()
     self.images_df = images_df
+    self.gm = gm
     self.resize = T.Resize((RESIZE_HEIGHT, RESIZE_WIDTH))
 
   def __len__(self):
@@ -51,7 +53,7 @@ class GeoData(Dataset):
       image = image[:3]
     image = self.resize(image)
 
-    label = torch.LongTensor([(360 // RESOLUTION) * ((lat + 90) // RESOLUTION) + ((lng + 180) // RESOLUTION)])
+    label = torch.LongTensor(self.gm.predict([(lat, lng)]))
 
     return image, label
 
@@ -100,7 +102,7 @@ class GeoNet(nn.Module):
       ResBlock(128, 128)
     ]
     self.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
-    self.fc = nn.Linear(128, (180 // RESOLUTION) * (360 // RESOLUTION))
+    self.fc = nn.Linear(128, NUM_CLASSES)
 
   def forward(self, x):
     x = self.conv(x)
@@ -156,10 +158,26 @@ def test(model, test_loader):
 def main():
   images_df = pd.read_csv(IMAGES_CSV)
   train_size = int(0.9 * len(images_df))
-  train_data = GeoData(images_df[:train_size])
-  test_data = GeoData(images_df[train_size:])
+  train_df = images_df[:train_size]
+  test_df = images_df[train_size:]
+
+  coords = train_df[['lat', 'lng']].to_numpy()
+  gm = GaussianMixture(n_components=NUM_CLASSES, random_state=0).fit(coords)
+
+  train_data = GeoData(train_df, gm)
+  test_data = GeoData(test_df, gm)
   train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
   test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
+
+  # regions = gm.predict(coords)
+  # counts = {}
+  # for region in regions:
+  #   if not region in counts:
+  #     counts[region] = 0
+  #   counts[region] += 1
+  # counts_list = list(counts.items())
+  # print(sorted(counts_list, key=lambda x: x[1], reverse=True))
+  # exit()
 
   if not os.path.isdir(TRAIN_OUT):
     os.makedirs(TRAIN_OUT)
