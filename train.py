@@ -13,13 +13,14 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
+from torchvision.models import resnet50, resnet18, ResNet18_Weights, ResNet50_Weights
 
 NUM_CLASSES = 20
-RESIZE_WIDTH = 240
-RESIZE_HEIGHT = 180
-NUM_EPOCHS = 15
-BATCH_SIZE = 32
-LEARNING_RATES = [0.001, 0.0005, 0.0001]
+RESIZE_WIDTH = 224  # handled by the weights.transforms() function of the pre-processed weights
+RESIZE_HEIGHT = 224  # ^
+NUM_EPOCHS = 30
+BATCH_SIZE = 64
+LEARNING_RATES = [0.01, 0.005, 0.001]
 MOMENTUM = 0.9
 
 TRAIN_OUT = 'train_out'
@@ -51,7 +52,11 @@ class GeoData(Dataset):
     image = io.read_image(image_path).float()
     if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
-    image = self.resize(image)
+    #image = self.resize(image)  # for if we are not using pre-trained model
+
+    weights = ResNet18_Weights.DEFAULT
+    preprocess = weights.transforms()
+    image = preprocess(image)
 
     label = torch.LongTensor(self.gm.predict([(lat, lng)]))
 
@@ -84,8 +89,9 @@ class ResBlock(nn.Module):
     return x
 
 class GeoNet(nn.Module):
-  def __init__(self):
+  def __init__(self, gm):
     super(GeoNet, self).__init__()
+    self.gm = gm
     self.conv = nn.Conv2d(3, 8, kernel_size=7, stride=2, padding=3)
     self.bn = nn.BatchNorm2d(8)
     self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -117,7 +123,12 @@ class GeoNet(nn.Module):
     return x
 
   def loss(self, pred, labels):
+    #print(self.gm.weights_)
+    #print(self.gm.predict(pred.tensor.detach().numpy()))
+    #weight_adjust = NUM_CLASSES * self.gm.weights_
+    #return torch.mul(F.cross_entropy(pred, labels), weight_adjust)
     return F.cross_entropy(pred, labels)
+
 
 def train(model, train_loader, optimizer):
   model.train()
@@ -127,7 +138,7 @@ def train(model, train_loader, optimizer):
     labels = labels.squeeze()
     optimizer.zero_grad()
     pred = model(images)
-    loss = model.loss(pred, labels)
+    loss = F.cross_entropy(pred, labels)
     loss.backward()
     optimizer.step()
     losses.append(loss.item())
@@ -147,7 +158,7 @@ def test(model, test_loader):
     for batch, (images, labels) in enumerate(test_loader):
       labels = labels.squeeze()
       pred = model(images)
-      loss = model.loss(pred, labels)
+      loss = F.cross_entropy(pred, labels)
       losses.append(loss.item())
       accuracy = torch.sum(torch.argmax(pred, 1) == labels) / len(labels)
       accuracies.append(accuracy.item())
@@ -211,7 +222,13 @@ def main():
   if os.path.isfile(MODEL_PATH):
     model = torch.load(MODEL_PATH)
   else:
-    model = GeoNet()
+    weights = ResNet18_Weights.DEFAULT
+    model = resnet18(weights=weights)
+    #below is for resnet as feature extractor (only training final layer)
+    for param in model.parameters():
+      param.requires_grad = False
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, NUM_CLASSES)
 
   with open(LOSSES_CSV, 'a') as losses_csv, open(ACCURACIES_CSV, 'a') as accuracies_csv:
     loss_writer = csv.writer(losses_csv)
@@ -220,7 +237,8 @@ def main():
     while epoch < NUM_EPOCHS:
       epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
       learning_rate = LEARNING_RATES[min(epoch // epochs_per_lr, len(LEARNING_RATES))]
-      optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
+      #below is for only training final layer of resnet
+      optimizer = optim.SGD(model.fc.parameters(), lr=learning_rate, momentum=MOMENTUM)
 
       train_loss, train_accuracy = train(model, train_loader, optimizer)
       test_loss, test_accuracy = test(model, test_loader)
