@@ -14,8 +14,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-NUM_CLASSES = 20
-NUM_EPOCHS = 30
+NUM_CLASSES = 21  # any lower and classes start to become too broad, any higher and we get unnecessary classes
+NUM_EPOCHS = 15
 BATCH_SIZE = 32
 LEARNING_RATES = [0.001, 0.0005, 0.0001]
 WEIGHT_DECAY = 0.0001
