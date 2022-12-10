@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import io
-import torchvision.transforms as T
+from torchvision.models import resnet18, ResNet18_Weights
 from sklearn.mixture import GaussianMixture
 import numpy as np
 import os
@@ -13,15 +13,12 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
-from torchvision.models import resnet50, resnet18, ResNet18_Weights, ResNet50_Weights
 
 NUM_CLASSES = 20
-RESIZE_WIDTH = 224  # handled by the weights.transforms() function of the pre-processed weights
-RESIZE_HEIGHT = 224  # ^
 NUM_EPOCHS = 30
-BATCH_SIZE = 64
-LEARNING_RATES = [0.01, 0.005, 0.001]
-MOMENTUM = 0.9
+BATCH_SIZE = 32
+LEARNING_RATES = [0.001, 0.0005, 0.0001]
+WEIGHT_DECAY = 0.0001
 
 TRAIN_OUT = 'train_out'
 MODEL_PATH = os.path.join(TRAIN_OUT, 'model.pt')
@@ -32,12 +29,16 @@ ACCURACIES_PLOT = os.path.join(TRAIN_OUT, 'accuracies.png')
 
 start_time = perf_counter()
 
+def preprocess(image):
+  weights = ResNet18_Weights.DEFAULT
+  transform = weights.transforms()
+  return transform(image)
+
 class GeoData(Dataset):
   def __init__(self, images_df, gm):
     super(Dataset, self).__init__()
     self.images_df = images_df
     self.gm = gm
-    self.resize = T.Resize((RESIZE_HEIGHT, RESIZE_WIDTH))
 
   def __len__(self):
     return len(self.images_df)
@@ -52,83 +53,11 @@ class GeoData(Dataset):
     image = io.read_image(image_path).float()
     if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
-    #image = self.resize(image)  # for if we are not using pre-trained model
 
-    weights = ResNet18_Weights.DEFAULT
-    preprocess = weights.transforms()
     image = preprocess(image)
-
     label = torch.LongTensor(self.gm.predict([(lat, lng)]))
 
     return image, label
-
-class ResBlock(nn.Module):
-  def __init__(self, in_channels, out_channels):
-    super(ResBlock, self).__init__()
-    self.downsample = out_channels > in_channels
-    self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2 if self.downsample else 1, padding=1)
-    self.bn1 = nn.BatchNorm2d(out_channels)
-    self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
-    self.bn2 = nn.BatchNorm2d(out_channels)
-    if self.downsample:
-      self.conv3 = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2)
-      self.bn3 = nn.BatchNorm2d(out_channels)
-
-  def forward(self, x):
-    r = x
-    x = self.conv1(x)
-    x = self.bn1(x)
-    x = F.relu(x)
-    x = self.conv2(x)
-    x = self.bn2(x)
-    if self.downsample:
-      r = self.conv3(r)
-      r = self.bn3(r)
-    x += r
-    x = F.relu(x)
-    return x
-
-class GeoNet(nn.Module):
-  def __init__(self, gm):
-    super(GeoNet, self).__init__()
-    self.gm = gm
-    self.conv = nn.Conv2d(3, 8, kernel_size=7, stride=2, padding=3)
-    self.bn = nn.BatchNorm2d(8)
-    self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-    self.res_blocks = [
-      ResBlock(8, 8),
-      ResBlock(8, 8),
-      ResBlock(8, 16),
-      ResBlock(16, 16),
-      ResBlock(16, 32),
-      ResBlock(32, 32),
-      ResBlock(32, 64),
-      ResBlock(64, 64),
-      ResBlock(64, 128),
-      ResBlock(128, 128)
-    ]
-    self.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
-    self.fc = nn.Linear(128, NUM_CLASSES)
-
-  def forward(self, x):
-    x = self.conv(x)
-    x = self.bn(x)
-    x = F.relu(x)
-    x = self.maxpool(x)
-    for res_block in self.res_blocks:
-      x = res_block(x)
-    x = self.avgpool(x)
-    x = torch.flatten(x, 1)
-    x = self.fc(x)
-    return x
-
-  def loss(self, pred, labels):
-    #print(self.gm.weights_)
-    #print(self.gm.predict(pred.tensor.detach().numpy()))
-    #weight_adjust = NUM_CLASSES * self.gm.weights_
-    #return torch.mul(F.cross_entropy(pred, labels), weight_adjust)
-    return F.cross_entropy(pred, labels)
-
 
 def train(model, train_loader, optimizer):
   model.train()
@@ -180,14 +109,14 @@ def main():
   train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
   test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 
-  # regions = gm.predict(coords)
+  # clusters = gm.predict(coords)
   # counts = {}
-  # for region in regions:
-  #   if not region in counts:
-  #     counts[region] = 0
-  #   counts[region] += 1
-  # counts_list = list(counts.items())
-  # print(sorted(counts_list, key=lambda x: x[1], reverse=True))
+  # for cluster in clusters:
+  #   if not cluster in counts:
+  #     counts[cluster] = 0
+  #   counts[cluster] += 1
+  # class_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+  # print(class_counts)
   # exit()
 
   if not os.path.isdir(TRAIN_OUT):
@@ -222,13 +151,13 @@ def main():
   if os.path.isfile(MODEL_PATH):
     model = torch.load(MODEL_PATH)
   else:
-    weights = ResNet18_Weights.DEFAULT
-    model = resnet18(weights=weights)
-    #below is for resnet as feature extractor (only training final layer)
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    # only train final layer
     for param in model.parameters():
       param.requires_grad = False
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, NUM_CLASSES)
+    # re-initialize final fully-connected layer
+    num_features = model.fc.in_features
+    model.fc = nn.Linear(num_features, NUM_CLASSES)
 
   with open(LOSSES_CSV, 'a') as losses_csv, open(ACCURACIES_CSV, 'a') as accuracies_csv:
     loss_writer = csv.writer(losses_csv)
@@ -236,9 +165,10 @@ def main():
 
     while epoch < NUM_EPOCHS:
       epochs_per_lr = NUM_EPOCHS // len(LEARNING_RATES)
-      learning_rate = LEARNING_RATES[min(epoch // epochs_per_lr, len(LEARNING_RATES))]
-      #below is for only training final layer of resnet
-      optimizer = optim.SGD(model.fc.parameters(), lr=learning_rate, momentum=MOMENTUM)
+      learning_rate = LEARNING_RATES[min(epoch // epochs_per_lr, len(LEARNING_RATES) - 1)]
+
+      # optimizer only for training final fully-connected layer
+      optimizer = optim.Adam(model.fc.parameters(), lr=learning_rate, weight_decay=WEIGHT_DECAY)
 
       train_loss, train_accuracy = train(model, train_loader, optimizer)
       test_loss, test_accuracy = test(model, test_loader)
