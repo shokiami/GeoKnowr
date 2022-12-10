@@ -60,6 +60,7 @@ class GeoData(Dataset):
     return image, label
 
 def train(model, train_loader, optimizer):
+  print('training...')
   model.train()
   losses = []
   accuracies = []
@@ -91,6 +92,7 @@ def test(model, test_loader):
       losses.append(loss.item())
       accuracy = torch.sum(torch.argmax(pred, 1) == labels) / len(labels)
       accuracies.append(accuracy.item())
+      print(f'batch: {batch + 1}/{len(test_loader)}, test loss: {loss.item()}, test accuracy: {accuracy.item()}, time: {round(perf_counter() - start_time, 1)}s')
   test_loss = np.mean(losses)
   test_accuracy = np.mean(accuracies)
   return test_loss, test_accuracy
