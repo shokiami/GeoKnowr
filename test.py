@@ -1,8 +1,7 @@
 from gsv_scraper import IMAGES_CSV, IMAGES_DIR, API_KEY
-from train import NUM_CLASSES, MODEL_PATH, preprocess
+from train import MODEL_PATH, preprocess
 import torch
 from torchvision import io
-from sklearn.mixture import GaussianMixture
 import numpy as np
 import requests
 import os
@@ -18,11 +17,6 @@ TEST_OUT = 'test_out'
 
 class GeoKnowr():
   def __init__(self):
-    images_df = pd.read_csv(IMAGES_CSV)
-    train_size = int(0.9 * len(images_df))
-    train_df = images_df[:train_size]
-    coords = train_df[['lat', 'lng']].to_numpy()
-    self.gm = GaussianMixture(n_components=NUM_CLASSES, random_state=0).fit(coords)
     self.model = torch.load(MODEL_PATH)
     self.model.eval()
 
@@ -31,12 +25,11 @@ class GeoKnowr():
     if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
     image = preprocess(image)
-    
-    with torch.no_grad():
-      pred = self.model(image.unsqueeze(0))
 
-    cluster = torch.argmax(pred).item()
-    pred_lat, pred_lng = self.gm.means_[cluster]
+    with torch.no_grad():
+      pred = self.model(image.unsqueeze(0))[0].numpy()
+    pred_lat = 90 * pred[0]
+    pred_lng = 180 * pred[1]
 
     return pred_lat, pred_lng
 
@@ -46,33 +39,6 @@ def distance(lat1, lng1, lat2, lng2):
   lat2 = np.deg2rad(lat2)
   lng2 = np.deg2rad(lng2)
   return 6371 * np.arccos(np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * np.cos(lng2 - lng1))
-
-def visualize_clusters(train_df, key):
-  coords = train_df[['lat', 'lng']].to_numpy()
-  gm = GaussianMixture(n_components=NUM_CLASSES, random_state=0).fit(coords)
-  clusters = gm.predict(coords)
-
-  colors = ['0xff0000', '0xffa500', '0xffff00', '0x00ff00', '0x2b65ec', '0xe6e6fa', '0x00ffff', '0xffffff', '0xa00000', '0x008080',
-            '0xc0c0c0', '0xffd700', '0xff4500', '0x964b00', '0xff9999', '0x023020', '0xff66ff', '0x00008b', '0x606060', '0xc4a484']
-  examples = []
-  for cluster in range(NUM_CLASSES):
-    count = 0
-    i = 0
-    while count < 200 // NUM_CLASSES:
-      if clusters[i] == cluster:
-        examples.append(i)
-        count += 1
-      i += 1
-
-  url = 'https://maps.googleapis.com/maps/api/staticmap'
-  params = {
-    'markers': [f'color:{colors[clusters[i]]}|{coords[i][0]},{coords[i][1]}' for i in examples],
-    'size': f'{MAP_WIDTH}x{MAP_HEIGHT}',
-    'key': key
-  }
-
-  with open(os.path.join(TEST_OUT, f'clusters.png'), 'wb') as map_path:
-    map_path.write(requests.get(url, params).content)
 
 def main():
   if os.path.isdir(TEST_OUT):
@@ -84,7 +50,6 @@ def main():
 
   images_df = pd.read_csv(IMAGES_CSV)
   train_size = int(0.9 * len(images_df))
-  train_df = images_df[:train_size]
   test_df = images_df[train_size:]
   vis_df = test_df.iloc[random.sample(range(len(test_df)), NUM_EXAMPLES)]
 
@@ -115,8 +80,6 @@ def main():
     print(f'guess: {pred_lat}, {pred_lng}')
     print(f'distance (km): {dist}')
     print()
-
-  visualize_clusters(train_df, key)
 
 if __name__ == '__main__':
   main()
