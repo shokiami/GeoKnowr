@@ -53,9 +53,9 @@ def visualize_clusters(train_df, key):
   gm = GaussianMixture(n_components=NUM_CLASSES, random_state=0).fit(coords)
   clusters = gm.predict(coords)
 
-  colors = ['0xff0000', '0xffa500', '0xffff00', '0x00ff00', '0x2b65ec', '0xe6e6fa', '0x00ffff',
-            '0xffffff', '0xa00000', '0x008080', '0xc0c0c0', '0xffd700', '0xff4500', '0x964b00',
-            '0xff9999', '0x023020', '0xff66ff', '0x00008b', '0x606060', '0xc4a484', '0xff007f']
+  colors = ['0xe6194b', '0x3cb44b', '0xffe119', '0x4363d8', '0xfffac8', '0x911eb4', '0x42d4f4',
+            '0xffffff', '0xaaffc3', '0xfabed4', '0x469990', '0xdcbeff', '0x4b0082', '0x800000',
+            '0xffd8b1', '0x808000', '0xf58231', '0x000075', '0xf032e6', '0xa0a0a0', '0x000000']
 
   points = []
   for cluster in range(NUM_CLASSES):
@@ -71,11 +71,13 @@ def visualize_clusters(train_df, key):
     paths.append('')
     for i in indices:
       lat, lng = points[cluster][i]
-      paths[cluster] += f'|{lat},{lng}'
+      paths[cluster] += f'{lat},{lng}|'
+    lat, lng = points[cluster][indices[0]]
+    paths[cluster] += f'{lat},{lng}'
 
   url = 'https://maps.googleapis.com/maps/api/staticmap'
   params = {
-    'path': [f'color:0x00000000|fillcolor:{colors[i]}|weight:5{paths[i]}' for i in range(NUM_CLASSES)],
+    'path': [f'color:0x00000000|fillcolor:{colors[i]}88|{paths[i]}' for i in range(NUM_CLASSES)],
     'zoom': 1,
     'scale': 2,
     'size': f'{int(MAP_WIDTH / 2)}x{int(MAP_HEIGHT / 2)}',
