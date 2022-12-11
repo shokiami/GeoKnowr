@@ -54,6 +54,10 @@ We decided to frame this as a regression problem, with the goal of minimizing ar
 
 One of the issues we noticed was how our model would consistently guess Greenland. This made sense, as Greenland is a relatively central location to most of our data (Streetview has an overrepresenetation of European data), and because we were using regression. We realized that to fix this issue we could reframe the problem as classification, with different regions of the world making up our classes. This forced our model to stop making "median guesses", and start guessing more directly.
 
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206890186-f5f8e7cf-3607-42e9-9652-c890a838bc5a.png" width="1000"/>
+</p>
+
 While the swap from regression to classification improved accuracy and made the predictions more human-like, we were still not getting great results. We knew that the size of our dataset was quite limited for training from scratch, and looked for ways we could squeeze out better results. With this in mind, we swapped from custom networks to a pre-trained ResNet18 model using transfer learning. This made a _huge_ difference, as all of a sudden our model no longer had to waste time learning edges and trees, and could instead get right to learning location differences.
 
 <p align="middle">
@@ -87,7 +91,7 @@ Results - How well did you do
 
 Once we figured out how to get the most out of our training, we were able to hit a training loss of #, a test loss of #, and training accuracy of #, and a test accuracy of #.
 
-We are very happy with these results, as going into this project our goal was to beat an average person. With the guesses we have seen our model make, we would absolutely destroy the average Jo (average Jo, not our amazing professor Jo).
+We are very happy with these results, as going into this project our goal was to beat an average person. With the guesses we have seen our model make, we would absolutely destroy the average Joe (average Joe, not our amazing professor Joe).
 
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206887447-de077199-f887-4577-ba6a-a2ccf88fddb1.png" width="1000"/>
@@ -98,9 +102,84 @@ We are very happy with these results, as going into this project our goal was to
 Examples - images/text/live demo, anything to show off your work (note, demos get some extra credit in the rubric)
 --------------------------------------------------------
 
+Eurajoki, Finland: 46.15km away <br>
+GT: (61.24206624516949, 21.49451874391871) <br>
+Guess: (60.866010738653614, 21.13157246788378) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206887517-16c9af1c-7a81-4055-b231-5de686b98f20.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206887523-da522479-c3bf-42c8-a576-7b02a9be0cf4.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888820-66a1873e-eb41-47b2-a55d-12b8ad1bc2ca.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888821-432c50a8-5752-4149-9a73-291c34bee6a0.png" width="500"/>
+</p>
+
+Cedar Pocket, Australia: 766.68km away <br>
+GT: (-26.2016867183339, 152.7428709700448) <br>
+Guess: (-31.684634839922268, 147.96179641452864) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888822-7e10529d-0f19-440b-93c4-117418db1ff9.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888825-80097726-4992-4144-a64e-752164b66f6b.png" width="500"/>
+</p>
+
+Ōdai, Japan: 554.07km away <br>
+GT: (34.29128958773475, 136.2255376621636) <br>
+Guess: (39.220061536212654, 137.1401260865559) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888827-d75b62cf-1e3b-43f7-b773-0ec345854d13.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888829-88e9ed80-ecca-46ac-a80d-7dc21479d5c1.png" width="500"/>
+</p>
+
+Pervomaiskii, Russia: 750.37km away <br>
+GT: (54.67348511884279, 54.76858543638147) <br>
+Guess: (57.3687329171972, 65.85774195636928) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888834-f3933270-84da-4f8d-96e2-6fad9f1fc678.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888835-7e059711-ea12-4a2d-8436-b1f2daed0ba8.png" width="500"/>
+</p>
+
+Clavering Øer, Greenland: 3001.91km away <br>
+GT: (74.36102804428536, -20.31095398871028) <br>
+Guess: (62.88085149124142, -94.28640809358343) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888850-1f2d64da-8ca6-414f-b38b-8fd78b10f156.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888855-04dfde27-6af6-4c67-a056-3c4e251e42a4.png" width="500"/>
+</p>
+
+Nuenen, Netherlands: 728.77km away <br>
+GT: (51.47712383096619, 5.568049157904403) <br>
+Guess: (46.52608328096249, -0.99022351617955) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888857-fee0d68e-57ec-4ab1-b613-0ce6975f396e.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888858-7fb9fbdd-0664-4585-a96b-f21104e58b52.png" width="500"/>
+</p>
+
+Tanjung Mulia, Indonesia: 778.63km away <br>
+GT: (2.111117753198836, 100.2296566933782) <br>
+Guess: (9.086239024023117, 99.60871719478148) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888859-7527d46e-5ad7-47fe-8b07-0d549cbdfdda.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888860-1544f91b-e64a-4096-aa65-bc163e8258a4.png" width="500"/>
+</p>
+
+Takper, Nigeria: 860.73km away <br>
+GT: (7.055152796196378, 8.483934407321177) <br>
+Guess: (9.65765106509962, 1.1147835438224805) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888862-be5e87c1-19c0-4c96-977c-3a59578e2f98.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888866-258517b1-a0b1-4d30-ab0c-31e4f4d58e8a.png" width="500"/>
+</p>
+
+Colonia Río Escondido, Mexico: 26.80km away <br>
+GT: (28.57000772521148, -100.6163712162074) <br>
+Guess: (28.465027052700034, -100.36940739027031) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888869-f568abc2-26aa-4a3c-89fa-42716d495c6a.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888871-f9ef5239-664d-48d4-b768-b4dd7383d72f.png" width="500"/>
+</p>
+
+Chipaya, Bolivia: 1133.61km away <br>
+GT: (-19.00475769083379, -68.10597816923791) <br>
+Guess: (-8.813989360376178, -68.40059804082549) <br>
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206888873-7c88c588-5faf-4e36-86c4-6fb6fcabd952.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888877-a88f17f1-fd9b-4f24-880c-64309aeca9af.png" width="500"/>
 </p>
 
 <br>
