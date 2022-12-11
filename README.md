@@ -123,6 +123,8 @@ We are very happy with these results! We speculate our model will be able to bea
 
 ## Examples
 
+Below are 10 example images and corresponding guesses from our model. Note that the red marker represents the ground truth and the grey marker represents the model's guess.
+
 Eurajoki, Finland: 46.15km away <br>
 GT: (61.24206624516949, 21.49451874391871) <br>
 Guess: (60.866010738653614, 21.13157246788378) <br>
