@@ -107,7 +107,7 @@ Here are our resuls after training for 15 epochs (~5 hours):
 - Final Train Loss: 2.016952
 - Final Test Loss: 2.153938
 - Final Train Accuracy: 36.56%
-- Finalt Test Accuracy: 32.75%
+- Final Test Accuracy: 32.75%
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206887495-7fdc886c-3ea6-43c3-b58c-076f9fd598d3.png" width="49%"/>
   <img src="https://user-images.githubusercontent.com/43970567/206887497-eba00fa3-0787-4e25-ab8d-d591a42ecd3c.png" width="49%"/>
