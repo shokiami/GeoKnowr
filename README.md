@@ -19,6 +19,10 @@ We wanted to create a neural network that, given an image from Google street vie
 There are three major facets to such a probelem: data collection, training, and testing. No matter how good a model can be, it is entirely useless without a sufficient amount of data to train on. And without testing, who knows if a model is useable or not. For us, we started with neither data or a model, and thus had
 to design methods to complete all 3.
 
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206887420-2371c244-5248-4723-b6db-2bccaf79a4ff.png" width="1000"/>
+</p>
+
 <br>
 
 Related work - what papers/ideas inspired you, what datasets did you use, etc
@@ -45,6 +49,10 @@ One of the issues we noticed was how our model would consistently guess Greenlan
 
 While the swap from regression to classification improved accuracy and made the predictions more human-like, we were still not getting great results. We knew that the size of our dataset was quite limited for training from scratch, and looked for ways we could squeeze out better results. With this in mind, we swapped from custom networks to a pre-trained ResNet18 model using transfer learning. This made a _huge_ difference, as all of a sudden our model no longer had to waste time learning edges and trees, and could instead get right to learning location differences.
 
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206887434-f334025f-8a0b-4601-be02-f6cec9b9c7d7.png" width="1000"/>
+</p>
+
 __Testing:__ <br>
 While we did switch from regression to classification, we still wanted to be able to see how far off the model's guesses were, and not just if they were in the right class or not. So, in addition to testing loss and accuracy, we added testing for distance, taking the latitude and longitude of both the guess and the ground truth, and then conducting the proper calculations.
 
@@ -52,6 +60,11 @@ While we did switch from regression to classification, we still wanted to be abl
 
 Experiments/evaluation - how are you evaluating your results
 ------------------------------------------------------
+
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206887495-7fdc886c-3ea6-43c3-b58c-076f9fd598d3.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206887497-eba00fa3-0787-4e25-ab8d-d591a42ecd3c.png" width="500"/>
+</p>
 
 <br>
 
@@ -62,10 +75,19 @@ Once we figured out how to get the most out of our training, we were able to hit
 
 We are very happy with these results, as going into this project our goal was to beat an average person. With the guesses we have seen our model make, we would absolutely destroy the average Jo (average Jo, not our amazing professor Jo).
 
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206887447-de077199-f887-4577-ba6a-a2ccf88fddb1.png" width="1000"/>
+</p>
+
 <br>
 
 Examples - images/text/live demo, anything to show off your work (note, demos get some extra credit in the rubric)
 --------------------------------------------------------
+
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/43970567/206887517-16c9af1c-7a81-4055-b231-5de686b98f20.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206887523-da522479-c3bf-42c8-a576-7b02a9be0cf4.png" width="500"/>
+</p>
 
 <br>
 
