@@ -2,7 +2,7 @@
 
 A GeoGuessr AI, created by Sho Kiami and Zach Chapman
 
-Abstract - in a paragraph or two, summarize the project
+Abstract
 -------------------------------------
 
 [GeoGuessr](https://www.geoguessr.com/) is a popular website that throws users into a random Google street view location, challenging them to accuratly guess where in the world they are. They could be thrown into Japan, Paris, the jungles of Africa, or--heaven forbid--Ohio. There are many variables that go into making a good prediction, along with the need for a well-rounded grasp of the world. However, what if we could save people the brainpower required to make an educated guess? That's where __GeoKnowr__ comes in, cutting down the time to make accurate guesses, and in the process freeing up precious minutes that can instead be spent leaving Ohio.
@@ -11,7 +11,7 @@ GeoKnowr is a neural network that has been trained on tens of thousands of stree
 
 <br>
 
-Problem statement - what are you trying to solve/do
+Problem statement
 ---------------------------------------
 
 We wanted to create a neural network that, given an image from Google street view, is able to beat out a regular person at guessing where in the world the picture was taken. We say regular person as there are some who have dedicated hundreds of hours to learning the ins and outs of GeogGuessr and thus have nearly perfect accuracy, down to a few hundred km. They would be very hard to beat with just a few weeks of development.
@@ -28,18 +28,18 @@ Above is a screenshot of us playing GeoGuessr. Note in the bottom left a world m
 
 <br><br>
 
-Related work - what papers/ideas inspired you, what datasets did you use, etc
+Related work
 ---------------------------------------------
 
 After deciding to switch over to transfer learning, we utilized quite heavily a pre-trained ResNet18 model ([Link](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) to ResNet paper). This model was trained on a sebset of the ImageNet dataset, consisting of around 1.3 million images.
 
 <br>
 
-Methodology - what is your approach/solution/what did you do?
+Methodology
 ---------------------------------------------------
 
-Data Collection
----------------------------------------------------
+Data collection
+--------------------------------------------------
 
 To generate enough data for our model to work with, we deciding to go with a scaping method. We continuosly call the Google street view website at random coordinates until our get request returns 'OK'. Once this occurs, we open up a playwright webkit browser at that location, scrub away unneeded UI elements, and save a screenshot.
 
@@ -54,16 +54,19 @@ We decided to frame this as a regression problem, with the goal of minimizing ar
 
 One of the issues we noticed was how our model would consistently guess Greenland. This made sense, as Greenland is a relatively central location to most of our data (Streetview has an overrepresenetation of European data), and because we were using regression. We realized that to fix this issue we could reframe the problem as classification, with different regions of the world making up our classes. This forced our model to stop making "median guesses", and start guessing more directly.
 
+To illustrate part of the issue with regression, below is an image of Google's street view coverage. Notice how not all of the Earth has been documented. By switching to classification, we can instead limit the guesses to where Google actually has data.
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206890186-f5f8e7cf-3607-42e9-9652-c890a838bc5a.png" width="1000"/>
 </p>
 
-While the swap from regression to classification improved accuracy and made the predictions more human-like, we were still not getting great results. We knew that the size of our dataset was quite limited for training from scratch, and looked for ways we could squeeze out better results. With this in mind, we swapped from custom networks to a pre-trained ResNet18 model using transfer learning. This made a _huge_ difference, as all of a sudden our model no longer had to waste time learning edges and trees, and could instead get right to learning location differences.
-
+Below is our classification map. Each colored region is a seperate class that our model tries to accurately predict. Note how our classification map mostly lines up with Google's covereage map. Using classification regions produced better results than regression, as the classes help the model learn what relevant regions of the world are similar. We also have enough classes that distance off is typically pretty close. 
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206887434-f334025f-8a0b-4601-be02-f6cec9b9c7d7.png" width="1000"/>
 </p>
-Above is our classification map. Each colored region is a seperate class that our model tries to accurately predict. Using classification regions produced better results than regression, as the classes help the model learn what regions of the world are similar. We also have enough classes that distance off is typically pretty close. 
+
+While the swap from regression to classification improved accuracy and made the predictions more human-like, we were still not getting great results. We knew that the size of our dataset was quite limited for training from scratch, and looked for ways we could squeeze out better results. With this in mind, we swapped from custom networks to a pre-trained ResNet18 model using transfer learning. This made a _huge_ difference, as all of a sudden our model no longer had to waste time learning edges and trees, and could instead get right to learning location differences.
+
+<br>
 
 Testing
 ---------------------------------------------------
@@ -72,7 +75,7 @@ While we did switch from regression to classification, we still wanted to be abl
 
 <br>
 
-Experiments/evaluation - how are you evaluating your results
+Experiments/evaluation
 ------------------------------------------------------
 
 When we get the results of our testing we are looking for a few trends. Of course we want loss to be as low as possible and accuracy to be as high as possible, but we also want our guesses to either be close to the truth, or if not, a reasonable guess. One of our examples further down the page show a guess of Canada when the actual is Greenland. While the distance of this is quite high, it's acutally not a bad result as this could be an easy mistake for a human to make as well. Parts of Greenland look just like parts of Canada. We found that our best performing model not only has good accuracy, but makes very reasonable guesses even when incorrect. On this same point, the actual performance of our model is better than what the accuracy may show, as being close but in a nieghboring class is counted as incorrect.
@@ -86,7 +89,7 @@ We also found from our results that we were overfitting our training data, which
 
 <br>
 
-Results - How well did you do
+Results
 --------------------------------------------------
 
 Once we figured out how to get the most out of our training, in 15 epochs of training (~5 hours), our model achieved:
@@ -103,7 +106,7 @@ We are very happy with these results, as going into this project our goal was to
 
 <br>
 
-Examples - images/text/live demo, anything to show off your work (note, demos get some extra credit in the rubric)
+Examples
 --------------------------------------------------------
 
 Eurajoki, Finland: 46.15km away <br>
@@ -194,7 +197,7 @@ If you would like to play around with our fully trained model, clone this reposi
 
 <br>
 
-Video - a 2-3 minute long video where you explain your project and the above information
+Video
 --------------------------------------------------------------
 
 
@@ -203,4 +206,4 @@ Video - a 2-3 minute long video where you explain your project and the above inf
 Future potential
 ---------------------------------------------------
 
-We are very pleased with the results that we have seen, and yet there is still improvements that can be made. For starters, we only have 32,000 street view data points, which compared to the size of the earth is pretty small (though it still performed well despite that). An easy way to get better performance without too much effort is just to scrape more data. If we have a lot more data, not only will the network naturally perform better after training, but we would be able to increase the number of calssifications, allowing finer grained guessing.
+We are very pleased with the results that we have seen, and yet there is still improvements that can be made. For starters, we only have 32,000 street view data points, which compared to the size of the earth is pretty small (though it still performed well despite that). An easy way to get better performance without too much effort is just to scrape more data. If we have a lot more data, not only will the network naturally perform better after training, but we would be able to increase the number of calssifications, allowing finer grained guessing. Alternitively, with enough data regression becomes more viable, as it will learning more specific locations rather than attempting to median guess.
