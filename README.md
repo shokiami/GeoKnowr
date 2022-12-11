@@ -4,6 +4,20 @@ A GeoGuessr AI. Created by Sho Kiami and Zach Chapman.
 
 <br>
 
+## Table of Contents
+
+1. [Abstract](https://github.com/shokiami/GeoKnowr/blob/main/README.md#abstract)
+2. [Problem Statement](https://github.com/shokiami/GeoKnowr/blob/main/README.md#problem-statement)
+3. [Related Work](https://github.com/shokiami/GeoKnowr/blob/main/README.md#related-work)
+4. [Methodology](https://github.com/shokiami/GeoKnowr/blob/main/README.md#methodology)
+5. [Results](https://github.com/shokiami/GeoKnowr/blob/main/README.md#results)
+6. [Examples](https://github.com/shokiami/GeoKnowr/blob/main/README.md#examples)
+7. [Demo](https://github.com/shokiami/GeoKnowr/blob/main/README.md#demo)
+8. [Video](https://github.com/shokiami/GeoKnowr/blob/main/README.md#video)
+9. [Looking Forward](https://github.com/shokiami/GeoKnowr/blob/main/README.md#looking-forward)
+
+<br>
+
 ## Abstract
 
 [GeoGuessr](https://www.geoguessr.com/) is a popular website that throws users into a random Google Street View location, challenging them to accuratly guess where in the world they are.
