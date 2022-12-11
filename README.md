@@ -47,7 +47,7 @@ There are three major aspects to this probelem: data collection, training, and t
 At this point, we would like to acknowledge all third-party technologies/tools that inspired or helped us along the way:
 - GeoGuessr (obviously).
 - Google Maps and Google Street View for data collection and testing (all of our street view imagery came from Google's APIs).
-- PyTorch pretrained ResNet-18 (more on this later) which we used for transfer learning ([link](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) to ResNet paper). This model was trained on a sebset of the ImageNet dataset, consisting of around 1.3 million images.
+- PyTorch pretrained ResNet-18 (more on this later) which we used for transfer learning ([link](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) to ResNet paper). This model was trained on a subset of the ImageNet dataset, consisting of around 1.3 million images for standard image classification.
 
 <br>
 
@@ -61,7 +61,7 @@ Our data collection could be broken up into the following steps:
 3. If so, grab the metadata for that location and scrape the corresponding street view image at a random heading.
 4. Repeat steps 1-3 until we gather enough data.
 
-We started off collecting high resolution images (1920x1080), but later realized that we would just scale them down for our model anyway, making the extra time/space not worth it. In the end, using this method, we downloaded a total of 32,000 images of (480x360) resolution from around the world. We would have loved to have more data, but chose against it due to deadline constraints.
+We started off collecting high resolution images (1920x1080), but later realized that we would just scale them down for our model anyway, making the extra time/space not worth it. In the end, using this method, we downloaded a total of 32,000 images of (480x360) resolution from around the world. We would have loved to have more data, but chose against it due to deadline and space constraints.
 
 <br>
 
