@@ -1,8 +1,6 @@
 # GeoKnowr
 
-A lightweight GeoGuessr AI.
-
-Created by Sho Kiami and Zach Chapman.
+A lightweight GeoGuessr AI by Sho Kiami and Zach Chapman.
 
 <br>
 
