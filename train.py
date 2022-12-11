@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
-from torchvision import io
+import torchvision.io
 from torchvision.models import resnet18, ResNet18_Weights
 from sklearn.mixture import GaussianMixture
 import numpy as np
@@ -50,7 +50,7 @@ class GeoData(Dataset):
     lng = image['lng']
 
     image_path = os.path.join(IMAGES_DIR, f'{pano_id}.png')
-    image = io.read_image(image_path).float()
+    image = torchvision.io.read_image(image_path).float()
     if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
 

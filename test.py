@@ -1,8 +1,9 @@
 from gsv_scraper import IMAGES_CSV, IMAGES_DIR, API_KEY
 from train import NUM_CLASSES, MODEL_PATH, preprocess
 import torch
-from torchvision import io
+import torchvision.io
 from sklearn.mixture import GaussianMixture
+from scipy.spatial import ConvexHull
 import numpy as np
 import requests
 import os
@@ -11,8 +12,8 @@ import pandas as pd
 import random
 
 NUM_EXAMPLES = 10
-MAP_WIDTH = 480
-MAP_HEIGHT = 360
+MAP_WIDTH = 960
+MAP_HEIGHT = 720
 
 TEST_OUT = 'test_out'
 
@@ -27,7 +28,7 @@ class GeoKnowr():
     self.model.eval()
 
   def guess(self, image_path):
-    image = io.read_image(image_path).float()
+    image = torchvision.io.read_image(image_path).float()
     if image.shape[0] == 4:  # remove alpha channel
       image = image[:3]
     image = preprocess(image)
@@ -52,26 +53,36 @@ def visualize_clusters(train_df, key):
   gm = GaussianMixture(n_components=NUM_CLASSES, random_state=0).fit(coords)
   clusters = gm.predict(coords)
 
-  colors = ['0xff0000', '0xffa500', '0xffff00', '0x00ff00', '0x2b65ec', '0xe6e6fa', '0x00ffff', '0xffffff', '0xa00000', '0x008080', '0xc0c0c0',
-            '0xffd700', '0xff4500', '0x964b00', '0xff9999', '0x023020', '0xff66ff', '0x00008b', '0x606060', '0xc4a484', '0xff007f']
-  examples = []
+  colors = ['0xff0000', '0xffa500', '0xffff00', '0x00ff00', '0x2b65ec', '0xe6e6fa', '0x00ffff',
+            '0xffffff', '0xa00000', '0x008080', '0xc0c0c0', '0xffd700', '0xff4500', '0x964b00',
+            '0xff9999', '0x023020', '0xff66ff', '0x00008b', '0x606060', '0xc4a484', '0xff007f']
+
+  points = []
   for cluster in range(NUM_CLASSES):
-    count = 0
-    i = 0
-    while count < 200 // NUM_CLASSES:
-      if clusters[i] == cluster:
-        examples.append(i)
-        count += 1
-      i += 1
+    points.append([])
+  for i in range(len(coords)):
+    lat, lng = coords[i]
+    center_lat, center_lng = gm.means_[clusters[i]]
+    if distance(lat, lng, center_lat, center_lng) < 4000:
+      points[clusters[i]].append((lat, lng))
+  paths = []
+  for cluster in range(NUM_CLASSES):
+    indices = ConvexHull(points[cluster]).vertices
+    paths.append('')
+    for i in indices:
+      lat, lng = points[cluster][i]
+      paths[cluster] += f'|{lat},{lng}'
 
   url = 'https://maps.googleapis.com/maps/api/staticmap'
   params = {
-    'markers': [f'color:{colors[clusters[i]]}|{coords[i][0]},{coords[i][1]}' for i in examples],
-    'size': f'{MAP_WIDTH}x{MAP_HEIGHT}',
+    'path': [f'color:0x00000000|fillcolor:{colors[i]}|weight:5{paths[i]}' for i in range(NUM_CLASSES)],
+    'zoom': 1,
+    'scale': 2,
+    'size': f'{int(MAP_WIDTH / 2)}x{int(MAP_HEIGHT / 2)}',
     'key': key
   }
 
-  with open(os.path.join(TEST_OUT, f'clusters.png'), 'wb') as map_path:
+  with open(os.path.join(TEST_OUT, 'clusters.png'), 'wb') as map_path:
     map_path.write(requests.get(url, params).content)
 
 def main():
@@ -103,7 +114,8 @@ def main():
     url = 'https://maps.googleapis.com/maps/api/staticmap'
     params = {
       'markers': [f'{lat},{lng}', f'color:black|label:G|{pred_lat},{pred_lng}'],
-      'size': f'{MAP_WIDTH}x{MAP_HEIGHT}',
+      'scale': 2,
+      'size': f'{int(MAP_WIDTH / 2)}x{int(MAP_HEIGHT / 2)}',
       'key': key
     }
 
