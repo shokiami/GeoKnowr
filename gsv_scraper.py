@@ -103,6 +103,7 @@ def main():
         pass
 
   print(f'done!')
+  print()
 
 if __name__ == '__main__':
   main()
