@@ -89,7 +89,11 @@ We also found from our results that we were overfitting our training data, which
 Results - How well did you do
 --------------------------------------------------
 
-Once we figured out how to get the most out of our training, we were able to hit a training loss of #, a test loss of #, and training accuracy of #, and a test accuracy of #.
+Once we figured out how to get the most out of our training, in 15 epochs of training (~5 hours), our model achieved:
+- Train Loss: 2.016952
+- Test Loss: 2.153938
+- Train Accuracy: 36.56%
+- Test Accuracy: 32.75%
 
 We are very happy with these results, as going into this project our goal was to beat an average person. With the guesses we have seen our model make, we would absolutely destroy the average Joe (average Joe, not our amazing professor Joe).
 
