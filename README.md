@@ -47,7 +47,7 @@ Our data collection could be broken up into the following steps:
 3. If so, grab the metadata for that location and scrape the corresponding street view image at a random heading.
 4. Repeat steps 1-3 until we gather enough data.
 
-We started off collecting high resolution images (1920x1080), but later realized that we would just scale them down for our model anyway, making the extra time/space not worth it. In the end, using this method, we downloaded a total of __32,000__ images of (480x360) resolution from around the world. We would have loved to have more data, but chose against it due to deadline constraints.
+We started off collecting high resolution images (1920x1080), but later realized that we would just scale them down for our model anyway, making the extra time/space not worth it. In the end, using this method, we downloaded a total of 32,000 images of (480x360) resolution from around the world. We would have loved to have more data, but chose against it due to deadline constraints.
 
 <br>
 
@@ -85,6 +85,7 @@ After an abundance of experimentation, we settled on the following hyperparamete
 - Batch Size: 32
 - Learning Rates: 0.001, 0.0005, 0.0001
 - Weight Decay: 0.0001
+- Optimizer: Adam
 
 Note: we utilized learning rate annealing where we trained for 5 epochs at each learning rate.
 
