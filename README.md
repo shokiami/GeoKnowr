@@ -189,7 +189,7 @@ Guess: (9.65765106509962, 1.1147835438224805) <br>
   <img src="https://user-images.githubusercontent.com/43970567/206888866-258517b1-a0b1-4d30-ab0c-31e4f4d58e8a.png" width="49%"/>
 </p>
 
-Colonia Río Escondido, Mexico: 26.80km away <br>
+Colonia Río Escondido, México: 26.80km away <br>
 GT: (28.57000772521148, -100.6163712162074) <br>
 Guess: (28.465027052700034, -100.36940739027031) <br>
 <p align="middle">
