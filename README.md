@@ -188,6 +188,12 @@ Guess: (-8.813989360376178, -68.40059804082549) <br>
 
 <br>
 
+Demo
+--------------------------------------------------------------
+If you would like to play around with our fully trained model, clone this repository, add any images you would like to test into the __demo_in__ folder, then run __demo.py__. Our model is able to guess for any picture, though it will probably perform worse unless the pic is similar to what it might see in street view (A horizontal pic from the road). Additionally, we provide a few pictures pre-uploaded into demo_in if you would like to immediatly try it out. The program will output a Google Maps link to its best guess, which you can throw into your browser.
+
+<br>
+
 Video - a 2-3 minute long video where you explain your project and the above information
 --------------------------------------------------------------
 
