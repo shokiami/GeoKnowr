@@ -18,7 +18,7 @@ GeoKnowr is a neural network that has been trained on tens of thousands of stree
 
 In GeoGuessr, a user could be tasked to locate an image like the following:
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206887420-2371c244-5248-4723-b6db-2bccaf79a4ff.png" width="1000"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206887420-2371c244-5248-4723-b6db-2bccaf79a4ff.png" width="98%"/>
 </p>
 <br>
 
@@ -59,7 +59,7 @@ One of the issues we noticed was that our model would consistently guess Greenla
 
 To illustrate part of the issue with regression, below is an image of Google's street view coverage. Notice how not all of the Earth has been documented.
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206890186-f5f8e7cf-3607-42e9-9652-c890a838bc5a.png" width="1000"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206890186-f5f8e7cf-3607-42e9-9652-c890a838bc5a.png" width="98%"/>
 </p>
 
 In order to combat this issue, we tried several other models including another custom network, this time with residual connections, in an attempt to improve the results--to no avail.
@@ -70,7 +70,7 @@ First, we tried dividing up the world into a grid of equal sized sectors. Howeve
 
 To combat this, we came up with a clever solution of using clustering algorithms to perform the class divisions for us, hopefully leading to more equal sized classes (with less sparsity in our data). After trying several different clustering algorithms and numbers of classes, we found that the Gaussian mixture model worked the best and 21 classes was the sweet spot where less classes led to regions which were too large and more classes led to too little examples per class. Here are the final clusters we ended up using:
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206887434-f334025f-8a0b-4601-be02-f6cec9b9c7d7.png" width="1000"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206887434-f334025f-8a0b-4601-be02-f6cec9b9c7d7.png" width="98%"/>
 </p>
 
 Each colored region is a seperate class that our model tries to categorize images into. Note how our classification map mostly lines up with Google Street View's covereage.
@@ -108,13 +108,13 @@ Here are our resuls after training for 15 epochs (~5 hours):
 - Final Train Accuracy: 36.56%
 - Finalt Test Accuracy: 32.75%
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206887495-7fdc886c-3ea6-43c3-b58c-076f9fd598d3.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206887497-eba00fa3-0787-4e25-ab8d-d591a42ecd3c.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206887495-7fdc886c-3ea6-43c3-b58c-076f9fd598d3.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206887497-eba00fa3-0787-4e25-ab8d-d591a42ecd3c.png" width="49%"/>
 </p>
 
 As mentioned previously, the metric we care most about is the distribution over the real-world distances from the model's guesses to the ground truth.
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206887447-de077199-f887-4577-ba6a-a2ccf88fddb1.png" width="1000"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206887447-de077199-f887-4577-ba6a-a2ccf88fddb1.png" width="98%"/>
 </p>
 
 We are very happy with these results! We speculate our model will be able to beat the average Joe at GeoGuessr (average Joe, not our amazing professor Joe).
@@ -127,80 +127,80 @@ Eurajoki, Finland: 46.15km away <br>
 GT: (61.24206624516949, 21.49451874391871) <br>
 Guess: (60.866010738653614, 21.13157246788378) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888820-66a1873e-eb41-47b2-a55d-12b8ad1bc2ca.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888821-432c50a8-5752-4149-9a73-291c34bee6a0.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888820-66a1873e-eb41-47b2-a55d-12b8ad1bc2ca.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888821-432c50a8-5752-4149-9a73-291c34bee6a0.png" width="49%"/>
 </p>
 
 Cedar Pocket, Australia: 766.68km away <br>
 GT: (-26.2016867183339, 152.7428709700448) <br>
 Guess: (-31.684634839922268, 147.96179641452864) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888822-7e10529d-0f19-440b-93c4-117418db1ff9.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888825-80097726-4992-4144-a64e-752164b66f6b.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888822-7e10529d-0f19-440b-93c4-117418db1ff9.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888825-80097726-4992-4144-a64e-752164b66f6b.png" width="49%"/>
 </p>
 
 Ōdai, Japan: 554.07km away <br>
 GT: (34.29128958773475, 136.2255376621636) <br>
 Guess: (39.220061536212654, 137.1401260865559) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888827-d75b62cf-1e3b-43f7-b773-0ec345854d13.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888829-88e9ed80-ecca-46ac-a80d-7dc21479d5c1.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888827-d75b62cf-1e3b-43f7-b773-0ec345854d13.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888829-88e9ed80-ecca-46ac-a80d-7dc21479d5c1.png" width="49%"/>
 </p>
 
 Pervomaiskii, Russia: 750.37km away <br>
 GT: (54.67348511884279, 54.76858543638147) <br>
 Guess: (57.3687329171972, 65.85774195636928) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888834-f3933270-84da-4f8d-96e2-6fad9f1fc678.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888835-7e059711-ea12-4a2d-8436-b1f2daed0ba8.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888834-f3933270-84da-4f8d-96e2-6fad9f1fc678.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888835-7e059711-ea12-4a2d-8436-b1f2daed0ba8.png" width="49%"/>
 </p>
 
 Clavering Øer, Greenland: 3001.91km away <br>
 GT: (74.36102804428536, -20.31095398871028) <br>
 Guess: (62.88085149124142, -94.28640809358343) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888850-1f2d64da-8ca6-414f-b38b-8fd78b10f156.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888855-04dfde27-6af6-4c67-a056-3c4e251e42a4.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888850-1f2d64da-8ca6-414f-b38b-8fd78b10f156.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888855-04dfde27-6af6-4c67-a056-3c4e251e42a4.png" width="49%"/>
 </p>
 
 Nuenen, Netherlands: 728.77km away <br>
 GT: (51.47712383096619, 5.568049157904403) <br>
 Guess: (46.52608328096249, -0.99022351617955) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888857-fee0d68e-57ec-4ab1-b613-0ce6975f396e.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888858-7fb9fbdd-0664-4585-a96b-f21104e58b52.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888857-fee0d68e-57ec-4ab1-b613-0ce6975f396e.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888858-7fb9fbdd-0664-4585-a96b-f21104e58b52.png" width="49%"/>
 </p>
 
 Tanjung Mulia, Indonesia: 778.63km away <br>
 GT: (2.111117753198836, 100.2296566933782) <br>
 Guess: (9.086239024023117, 99.60871719478148) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888859-7527d46e-5ad7-47fe-8b07-0d549cbdfdda.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888860-1544f91b-e64a-4096-aa65-bc163e8258a4.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888859-7527d46e-5ad7-47fe-8b07-0d549cbdfdda.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888860-1544f91b-e64a-4096-aa65-bc163e8258a4.png" width="49%"/>
 </p>
 
 Takper, Nigeria: 860.73km away <br>
 GT: (7.055152796196378, 8.483934407321177) <br>
 Guess: (9.65765106509962, 1.1147835438224805) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888862-be5e87c1-19c0-4c96-977c-3a59578e2f98.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888866-258517b1-a0b1-4d30-ab0c-31e4f4d58e8a.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888862-be5e87c1-19c0-4c96-977c-3a59578e2f98.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888866-258517b1-a0b1-4d30-ab0c-31e4f4d58e8a.png" width="49%"/>
 </p>
 
 Colonia Río Escondido, Mexico: 26.80km away <br>
 GT: (28.57000772521148, -100.6163712162074) <br>
 Guess: (28.465027052700034, -100.36940739027031) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888869-f568abc2-26aa-4a3c-89fa-42716d495c6a.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888871-f9ef5239-664d-48d4-b768-b4dd7383d72f.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888869-f568abc2-26aa-4a3c-89fa-42716d495c6a.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888871-f9ef5239-664d-48d4-b768-b4dd7383d72f.png" width="49%"/>
 </p>
 
 Chipaya, Bolivia: 1133.61km away <br>
 GT: (-19.00475769083379, -68.10597816923791) <br>
 Guess: (-8.813989360376178, -68.40059804082549) <br>
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/43970567/206888873-7c88c588-5faf-4e36-86c4-6fb6fcabd952.png" width="500"/>
-  <img src="https://user-images.githubusercontent.com/43970567/206888877-a88f17f1-fd9b-4f24-880c-64309aeca9af.png" width="500"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888873-7c88c588-5faf-4e36-86c4-6fb6fcabd952.png" width="49%"/>
+  <img src="https://user-images.githubusercontent.com/43970567/206888877-a88f17f1-fd9b-4f24-880c-64309aeca9af.png" width="49%"/>
 </p>
 
 <br>
