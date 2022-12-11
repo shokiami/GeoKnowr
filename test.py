@@ -89,8 +89,8 @@ def visualize_examples(geo_knowr, test_df, key):
     with open(os.path.join(TEST_OUT, f'map_{i}.png'), 'wb') as map_path:
       map_path.write(requests.get(url, params).content)
 
-    print(f'example {i + 1}/{NUM_EXAMPLES}:')
-    print(f'ground truth (lat, lng): {lat}, {lng}')
+    print(f'example {i}:')
+    print(f'GT (lat, lng): {lat}, {lng}')
     print(f'guess (lat, lng): {pred_lat}, {pred_lng}')
     print(f'distance (km): {dist}')
     print()
