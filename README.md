@@ -20,9 +20,9 @@ A GeoGuessr AI. Created by Sho Kiami and Zach Chapman.
 
 ## Abstract
 
-[GeoGuessr](https://www.geoguessr.com/) is a popular website that throws users into a random Google Street View location, challenging them to accuratly guess where in the world they are.
+[GeoGuessr](https://www.geoguessr.com/) is a popular web game where users are thrown into random locations around the world in Google Street View and are challenged to place a marker on the world map to guess where they are in the world (the closer you guess, the more points you get).
 
-There are many variables that go into making a good prediction, along with the need for a well-rounded grasp of the world. However, what if we could save people the brainpower required to make an educated guess? That's where __GeoKnowr__ comes in!
+There are many variables that go into making a good guess: climate, architecture, street signs, vegetation, vibes, and more. However, what if we could save people the brainpower required to make an educated guess? That's where __GeoKnowr__ comes in!
 
 GeoKnowr is a neural network that has been trained on tens of thousands of street view images from around the world, and is able to guess with a respectable amount of accuracy the location of any street view image thrown its way.
 
