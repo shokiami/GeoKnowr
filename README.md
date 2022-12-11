@@ -28,7 +28,7 @@ There are three major aspects to this probelem: data collection, training, and t
 
 <br>
 
-## Related work
+## Related Work
 
 At this point, we would like to acknowledge all third-party technologies/tools that inspired or helped us along the way:
 - GeoGuessr (obviously).
@@ -39,7 +39,7 @@ At this point, we would like to acknowledge all third-party technologies/tools t
 
 ## Methodology
 
-### __Data collection__
+### __Data Collection__
 
 Our data collection could be broken up into the following steps:
 1. Choose a random (latitude, longitude) coordinate.
