@@ -135,7 +135,7 @@ def main():
       loss_writer.writerow(['train_loss', 'test_loss'])
     with open(ACCURACIES_CSV, 'w') as accuracies_csv:
       accuracy_writer = csv.writer(accuracies_csv)
-      accuracy_writer.writerow(['train_accuray', 'test_accuracy'])
+      accuracy_writer.writerow(['train_accuracy', 'test_accuracy'])
 
   epoch = 0
   train_losses = []
