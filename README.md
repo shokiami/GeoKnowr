@@ -2,112 +2,126 @@
 
 A GeoGuessr AI, created by Sho Kiami and Zach Chapman
 
-Abstract
--------------------------------------
+<br>
 
-[GeoGuessr](https://www.geoguessr.com/) is a popular website that throws users into a random Google street view location, challenging them to accuratly guess where in the world they are. They could be thrown into Japan, Paris, the jungles of Africa, or--heaven forbid--Ohio. There are many variables that go into making a good prediction, along with the need for a well-rounded grasp of the world. However, what if we could save people the brainpower required to make an educated guess? That's where __GeoKnowr__ comes in, cutting down the time to make accurate guesses, and in the process freeing up precious minutes that can instead be spent leaving Ohio.
+## Abstract
+
+[GeoGuessr](https://www.geoguessr.com/) is a popular website that throws users into a random Google Street View location, challenging them to accuratly guess where in the world they are.
+
+There are many variables that go into making a good prediction, along with the need for a well-rounded grasp of the world. However, what if we could save people the brainpower required to make an educated guess? That's where __GeoKnowr__ comes in!
 
 GeoKnowr is a neural network that has been trained on tens of thousands of street view images from around the world, and is able to guess with a respectable amount of accuracy the location of any street view image thrown its way.
 
 <br>
 
-Problem statement
----------------------------------------
+## Problem Statement
 
-We wanted to create a neural network that, given an image from Google street view, is able to beat out a regular person at guessing where in the world the picture was taken. We say regular person as there are some who have dedicated hundreds of hours to learning the ins and outs of GeogGuessr and thus have nearly perfect accuracy, down to a few hundred km. They would be very hard to beat with just a few weeks of development.
-
-There are multiple modes of play within GeoGuessr, and the one we want our model to excel at is the no-movement mode. Instead of being able to wander around the street view to find clues, this is a hard-core mode where you only get a single frame to guess off of. And yes, the GeoGuessr pros still have nearly perfect accuracy even under such a tough restriction, so we're not trying to compete with them.
-
-There are three major facets to such a probelem: data collection, training, and testing. No matter how good a model can be, it is entirely useless without a sufficient amount of data to train on. And without testing, who knows if a model is useable or not. For us, we started with neither data or a model, and thus had
-to design methods to complete all three.
-
+In GeoGuessr, a user could be tasked to locate an image like the following:
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206887420-2371c244-5248-4723-b6db-2bccaf79a4ff.png" width="1000"/>
 </p>
-Above is a screenshot of us playing GeoGuessr. Note in the bottom left a world map that allows us to guess where we think we are. Japan seems probable based on what we saw, but it sure would be nice for a neural network to take away thinking on our end.
+<br>
 
-<br><br>
+Our goal was to use computer vision and deep learning to create a GeoGuessr AI that would be able to reliably guess the location of where such images were taken. Furthermore, GeoGuessr has several different modes, one of which is NMPZ (no moving-panning-zooming) which is notoriously the most difficult and thus the one we wanted to tackle.
 
-Related work
----------------------------------------------
-
-After deciding to switch over to transfer learning, we utilized quite heavily a pre-trained ResNet18 model ([Link](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) to ResNet paper). This model was trained on a sebset of the ImageNet dataset, consisting of around 1.3 million images.
+There are three major aspects to this probelem: data collection, training, and testing. For us, we started with neither data nor a model, and thus we had to build up the entire pipeline from scratch.
 
 <br>
 
-Methodology
----------------------------------------------------
+## Related work
 
-Data collection
---------------------------------------------------
+At this point, we would like to acknowledge all third-party technologies/tools that inspired or helped us along the way:
+- GeoGuessr (obviously).
+- Google Maps and Google Street View for data collection and testing (all of our street view imagery came from Google's APIs).
+- PyTorch pretrained ResNet-18 (more on this later) which we used for transfer learning ([link](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) to ResNet paper). This model was trained on a sebset of the ImageNet dataset, consisting of around 1.3 million images.
 
-To generate enough data for our model to work with, we deciding to go with a scaping method. We continuosly call the Google street view website at random coordinates until our get request returns 'OK'. Once this occurs, we open up a playwright webkit browser at that location, scrub away unneeded UI elements, and save a screenshot.
+<br>
 
-We started off collecting high res images (1920x1080), but later realized that we would just scale them down for our model anyway, making the extra time not worth it.
+## Methodology
 
-Using this method we downloaded a total of 32,000 images of 360p quality from around the world. If we had more time additional data would of course be welcome, but that comes with a high time price, both on the scraping and on the model training.
+### __Data collection__
 
-Training
----------------------------------------------------
+Our data collection could be broken up into the following steps:
+1. Choose a random (latitude, longitude) coordinate.
+2. Use Google's API's to see if any Google Street View locations exist within a 10km search radius.
+3. If so, grab the metadata for that location and scrape the corresponding street view image at a random heading.
+4. Repeat steps 1-3 until we gather enough data.
 
-We decided to frame this as a regression problem, with the goal of minimizing arc distance around the unit sphere (surface distance). We thought that this would produce guesses with the lowest distance from the truth. For our model, we initially started off with a custom convolutional nn (neural network) model, with which we had decent success but nothing spectacular. We later switched over to another custom network, this time residual, in an attempt to improve the results. While this did help a little, results remained in the same ballpark.
+We started off collecting high resolution images (1920x1080), but later realized that we would just scale them down for our model anyway, making the extra time/space not worth it. In the end, using this method, we downloaded a total of __32,000__ images of (480x360) resolution from around the world. We would have loved to have more data, but chose against it due to deadline constraints.
 
-One of the issues we noticed was how our model would consistently guess Greenland. This made sense, as Greenland is a relatively central location to most of our data (Streetview has an overrepresenetation of European data), and because we were using regression. We realized that to fix this issue we could reframe the problem as classification, with different regions of the world making up our classes. This forced our model to stop making "median guesses", and start guessing more directly.
+<br>
 
-To illustrate part of the issue with regression, below is an image of Google's street view coverage. Notice how not all of the Earth has been documented. By switching to classification, we can instead limit the guesses to where Google actually has data.
+### __Training__
+
+We decided to frame this as a regression problem, with the goal of minimizing surface distance around the unit sphere because this is ultimately the criterion we are trying to minimize when playing GeoGuessr. For our model, we initially started off with a custom convolutional neural network, however, our results were not great.
+
+One of the issues we noticed was that our model would consistently guess Greenland. This made sense, as Greenland is a relatively central location to most of our data (most of the world is in the northern hemisphere and Google Street View has an overrepresenetation of European data), and so by using regression, our model simply learned to average guess.
+
+To illustrate part of the issue with regression, below is an image of Google's street view coverage. Notice how not all of the Earth has been documented.
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206890186-f5f8e7cf-3607-42e9-9652-c890a838bc5a.png" width="1000"/>
 </p>
 
-Below is our classification map. Each colored region is a seperate class that our model tries to accurately predict. Note how our classification map mostly lines up with Google's covereage map. Using classification regions produced better results than regression, as the classes help the model learn what relevant regions of the world are similar. We also have enough classes that distance off is typically pretty close. 
+In order to combat this issue, we tried several other models including another custom network, this time with residual connections, in an attempt to improve the results--to no avail.
+
+The first major breakthrough came when we realized that we could reframe the problem as classification by dividing up the globe into numerous regions. The model would then classify an image into one of these regions and then guess the center of the region. This forced our model to stop average guessing and guess more directly, as nearby regions are equally penalized as regions on the opposite side of the world. Another motivation behind this switch was the recognition that as humans, we also play GeoGuessr by region guessing--mentally dividng up the world into discrete sections.
+
+First, we tried dividing up the world into a grid of equal sized sectors. However, the issue with this was that the majority of the sectors had very few examples in our data (e.g. over the water or in an area with low Google Street View coverage). As a result, similarly to regression, our model would simply learn to continuously predict the majority class.
+
+To combat this, we came up with a clever solution of using clustering algorithms to perform the class divisions for us, hopefully leading to more equal sized classes (with less sparsity in our data). After trying several different clustering algorithms and numbers of classes, we found that the Gaussian mixture model worked the best and 21 classes was the sweet spot where less classes led to regions which were too large and more classes led to too little examples per class. Here are the final clusters we ended up using:
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206887434-f334025f-8a0b-4601-be02-f6cec9b9c7d7.png" width="1000"/>
 </p>
 
-While the swap from regression to classification improved accuracy and made the predictions more human-like, we were still not getting great results. We knew that the size of our dataset was quite limited for training from scratch, and looked for ways we could squeeze out better results. With this in mind, we swapped from custom networks to a pre-trained ResNet18 model using transfer learning. This made a _huge_ difference, as all of a sudden our model no longer had to waste time learning edges and trees, and could instead get right to learning location differences.
+Each colored region is a seperate class that our model tries to categorize images into. Note how our classification map mostly lines up with Google Street View's covereage.
+
+Unfortunately, the model was still predicting the majority class, albeit sometimes throwing in one or two other classes. We concluded that this was an issue with the size of our data set; we did not have enough data to adequately train a deep neural network from scratch.
+
+The second major breakthrough came when we recognized the possibility of leveraging transfer learning. We tried transfer learning on several different models and found ResNet-18 to yield the best performance considering its ease of training. This made a _huge_ difference; our model no longer had to learn how to extract core features from the images such as specific edges and shapes. Instead, it would gain access to the features provided by pretrained ResNet-18 and could focus on learning the relationship between those features and our classes.
+
+After an abundance of experimentation, we settled on the following hyperparameters:
+- Classes: 21
+- Epochs: 15
+- Batch Size: 32
+- Learning Rates: 0.001, 0.0005, 0.0001
+- Weight Decay: 0.0001
+
+Note: we utilized learning rate annealing where we trained for 5 epochs at each learning rate.
 
 <br>
 
-Testing
----------------------------------------------------
+### __Evaluation__
 
-While we did switch from regression to classification, we still wanted to be able to see how far off the model's guesses were, and not just if they were in the right class or not. So, in addition to testing loss and accuracy, we added testing for distance, taking the latitude and longitude of both the guess and the ground truth, and then conducting the proper calculations.
+Our main metrics by which we evaluated our model throughout the training process was cross entropy loss (standard to classification) and model accuracy. For example, at one point we noticed that our model was heavily overfitting to our training data which prompted us to add weight decay and tune our other hyperparameters.
+
+However, in the end, the metric we cared most about was the real-world distance between the model's guesses and the ground truth. To measure this we developed a test script which evaluates the model on the test set (see results section) and visualizes several random examples (see examples section). Note that this is a better assessment of our model's performance over relying on test accuracy--while a guess may be labelled in the incorrect class, in actuality, it could be very close in terms of real-world distance.
+
+Furthermore, we also considered how reasonable the model's guesses were in general (e.g. confusing Canada with Greenland is much more reasonable than confusing Canada with Nigeria). This was much more hand-wavy, however, and thus we did not have a great way to measure this quantitatively.
 
 <br>
 
-Experiments/evaluation
-------------------------------------------------------
+## Results
 
-When we get the results of our testing we are looking for a few trends. Of course we want loss to be as low as possible and accuracy to be as high as possible, but we also want our guesses to either be close to the truth, or if not, a reasonable guess. One of our examples further down the page show a guess of Canada when the actual is Greenland. While the distance of this is quite high, it's acutally not a bad result as this could be an easy mistake for a human to make as well. Parts of Greenland look just like parts of Canada. We found that our best performing model not only has good accuracy, but makes very reasonable guesses even when incorrect. On this same point, the actual performance of our model is better than what the accuracy may show, as being close but in a nieghboring class is counted as incorrect.
-
-We also found from our results that we were overfitting our training data, which we helped reduce the severity of by adding weight decay. We used our results to great effect in finding hyperparameters that worked the best for what we were looking for.
-
+Here are our resuls after training for 15 epochs (~5 hours):
+- Final Train Loss: 2.016952
+- Final Test Loss: 2.153938
+- Final Train Accuracy: 36.56%
+- Finalt Test Accuracy: 32.75%
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206887495-7fdc886c-3ea6-43c3-b58c-076f9fd598d3.png" width="500"/>
   <img src="https://user-images.githubusercontent.com/43970567/206887497-eba00fa3-0787-4e25-ab8d-d591a42ecd3c.png" width="500"/>
 </p>
 
-<br>
-
-Results
---------------------------------------------------
-
-Once we figured out how to get the most out of our training, in 15 epochs of training (~5 hours), our model achieved:
-- Train Loss: 2.016952
-- Test Loss: 2.153938
-- Train Accuracy: 36.56%
-- Test Accuracy: 32.75%
-
-We are very happy with these results, as going into this project our goal was to beat an average person. With the guesses we have seen our model make, we would absolutely destroy the average Joe (average Joe, not our amazing professor Joe).
-
+As mentioned previously, the metric we care most about is the distribution over the real-world distances from the model's guesses to the ground truth.
 <p align="middle">
   <img src="https://user-images.githubusercontent.com/43970567/206887447-de077199-f887-4577-ba6a-a2ccf88fddb1.png" width="1000"/>
 </p>
 
+We are very happy with these results! We speculate our model will be able to beat the average Joe at GeoGuessr (average Joe, not our amazing professor Joe).
+
 <br>
 
-Examples
---------------------------------------------------------
+## Examples
 
 Eurajoki, Finland: 46.15km away <br>
 GT: (61.24206624516949, 21.49451874391871) <br>
@@ -191,19 +205,28 @@ Guess: (-8.813989360376178, -68.40059804082549) <br>
 
 <br>
 
-Demo
---------------------------------------------------------------
-If you would like to play around with our fully trained model, clone this repository, add any images you would like to test into the __demo_in__ folder, then run __demo.py__. Our model is able to guess for any picture, though it will probably perform worse unless the pic is similar to what it might see in street view (A horizontal pic from the road). Additionally, we provide a few pictures pre-uploaded into demo_in if you would like to immediatly try it out. The program will output a Google Maps link to its best guess, which you can throw into your browser.
+## Demo
+
+Try it yourself! Follow these steps:
+1. Clone the repo:
+    ```
+    git clone git@github.com:shokiami/GeoKnowr.git
+    ```
+2. Add images into the folder `demo_in`. We have included some example images for you. :)
+3. Run:
+    ```
+    python3 demo.py
+    ```
+4. Navigate to the outputted url's to see the model's guesses in Google Maps.
 
 <br>
 
-Video
---------------------------------------------------------------
-
+## Video
 
 <br>
 
-Future potential
----------------------------------------------------
+## Looking Forward
 
-We are very pleased with the results that we have seen, and yet there is still improvements that can be made. For starters, we only have 32,000 street view data points, which compared to the size of the earth is pretty small (though it still performed well despite that). An easy way to get better performance without too much effort is just to scrape more data. If we have a lot more data, not only will the network naturally perform better after training, but we would be able to increase the number of calssifications, allowing finer grained guessing. Alternitively, with enough data regression becomes more viable, as it will learning more specific locations rather than attempting to median guess.
+We are very pleased with the results that we have seen, yet there are still improvements that can be made. For starters, we only have 32,000 street view data points, which is very small considering the amount of Google Street View coverage and how difficult the problem space is. With more data, not only will the network naturally perform better after training, but we would be able to increase the number of classes, allowing finer-grained guessing which would in turn increase model performance. 
+
+Another avenue we want to explore in the future is returning to using regression. Especially if we were to gather more data, we hope that our implementation of techniques such as transfer learning would help our model better learn the correlations in our data instead of average guessing.
