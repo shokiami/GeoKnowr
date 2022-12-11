@@ -1,6 +1,6 @@
 # GeoKnowr
 
-A GeoGuessr AI, created by Sho Kiami and Zach Chapman
+A GeoGuessr AI, created by Sho Kiami and Zach Chapman.
 
 <br>
 
