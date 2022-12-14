@@ -87,7 +87,7 @@ To combat this, we came up with a clever solution of using clustering algorithms
   <img src="https://user-images.githubusercontent.com/43970567/206887434-f334025f-8a0b-4601-be02-f6cec9b9c7d7.png" width="98%"/>
 </p>
 
-Each colored region is a seperate class that our model tries to categorize images into. Note how our classification map mostly lines up with Google Street View's covereage.
+Each colored region is a seperate class that our model tries to categorize images into. Note how our classification map mostly lines up with Google Street View's coverage.
 
 Unfortunately, the model was still predicting the majority class, albeit sometimes throwing in one or two other classes. We concluded that this was an issue with the size of our data set; we did not have enough data to adequately train a deep neural network from scratch.
 
