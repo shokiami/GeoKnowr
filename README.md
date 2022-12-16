@@ -132,6 +132,13 @@ As mentioned previously, the metric we care most about is the distribution over 
   <img src="https://user-images.githubusercontent.com/43970567/206887447-de077199-f887-4577-ba6a-a2ccf88fddb1.png" width="98%"/>
 </p>
 
+Results Summary:
+- 5th percentile: 361.33km (correct part of country)
+- 10th percentile: 520.11km (correct country)
+- 25th percentile: 980.21km (correct region)
+- Median: 2839.96km (correct continent)
+- Mean: 5355.54km
+
 We are very happy with these results! We speculate our model will be able to beat the average Joe at GeoGuessr (average Joe, not our amazing professor Joe).
 
 <br>
