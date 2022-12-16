@@ -103,6 +103,9 @@ def plot_distances(geo_knowr, test_df):
     image_path = os.path.join(IMAGES_DIR, f'{pano_id}.png')
     pred_lat, pred_lng = geo_knowr.guess(image_path)
     distances.append(distance(pred_lat, pred_lng, lat, lng))
+  for percentile in [5, 10, 25, 50]:
+    print(f'{percentile}th percentile: {np.percentile(distances, percentile)}')
+  print(f'mean: {np.mean(distances)}')
   plt.figure()
   plt.title('Guess Distance Distribution (3200 examples)')
   plt.hist(distances, bins=100, color='#4363d8')
