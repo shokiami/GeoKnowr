@@ -27,8 +27,8 @@ MODEL_GM = os.path.join(MODEL, 'gm.pkl')
 MODEL_RESNET = os.path.join(MODEL, 'resnet.pt')
 LOSSES_CSV = os.path.join(TRAIN_OUT, 'losses.csv')
 ACCURACIES_CSV = os.path.join(TRAIN_OUT, 'accuracies.csv')
-LOSSES_PLOT = os.path.join(TRAIN_OUT, 'losses.png')
-ACCURACIES_PLOT = os.path.join(TRAIN_OUT, 'accuracies.png')
+LOSS_PLOT = os.path.join(TRAIN_OUT, 'loss.png')
+ACCURACY_PLOT = os.path.join(TRAIN_OUT, 'accuracy.png')
 
 start_time = perf_counter()
 
@@ -188,7 +188,7 @@ def main():
       plt.xlabel('Epoch')
       plt.ylabel('Loss')
       plt.legend()
-      plt.savefig(LOSSES_PLOT)
+      plt.savefig(LOSS_PLOT)
 
       plt.figure()
       plt.title('Accuracy vs. Epoch')
@@ -197,7 +197,7 @@ def main():
       plt.xlabel('Epoch')
       plt.ylabel('Accuracy')
       plt.legend()
-      plt.savefig(ACCURACIES_PLOT)
+      plt.savefig(ACCURACY_PLOT)
 
       print(f'epoch: {epoch + 1}/{NUM_EPOCHS}, train accuracy: {train_accuracy}, test accuracy: {test_accuracy}, time: {round(perf_counter() - start_time, 1)}s')
       epoch += 1
